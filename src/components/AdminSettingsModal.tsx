@@ -10,12 +10,17 @@ interface AdminSettingsModalProps {
 
 const CREDS_KEY = 'portal_admin_credentials';
 
+export const DEFAULT_CREDENTIALS = {
+  username: 'Krupa',
+  password: 'Krupa@123',
+};
+
 export function getAdminCredentials(): { username: string; password: string } {
   try {
     const stored = localStorage.getItem(CREDS_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return { username: 'admin', password: 'admin123' };
+  return DEFAULT_CREDENTIALS;
 }
 
 export function saveAdminCredentials(username: string, password: string) {
