@@ -92,16 +92,17 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
-              <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full text-purple-900 text-xs font-semibold whitespace-nowrap">
+              <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full text-purple-900 text-xs font-semibold whitespace-nowrap">
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span>Admin</span>
                 <button
                   type="button"
                   onClick={onAdminLogout}
                   title="Sign out"
-                  className="ml-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                  className="ml-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-700 hover:text-rose-900 transition-colors cursor-pointer text-[11px] font-semibold"
                 >
                   <LogOut className="w-3 h-3" />
+                  Sign Out
                 </button>
               </div>
             ) : (
