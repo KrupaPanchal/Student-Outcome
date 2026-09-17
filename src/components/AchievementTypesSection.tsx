@@ -143,7 +143,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
               <div
                 key={cat}
                 id={`form-section-${cat.replace(/\s+/g, '-').toLowerCase()}`}
-                className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4"
+                className="p-3.5 sm:p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4"
               >
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -155,7 +155,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {/* Name of Competition / Event / Achievement */}
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-700">
@@ -193,7 +193,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                     <label className="block text-xs font-semibold text-slate-700">
                       Level <span className="text-rose-500">*</span>
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
                       {(['State Level', 'National Level', 'International Level'] as const).map((lvl) => (
                         <label
                           key={lvl}
@@ -222,7 +222,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                     <label className="block text-xs font-semibold text-slate-700">
                       Participation Status <span className="text-rose-500">*</span>
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
                       {(['Participated', 'Winner', 'Runner Up', 'Presented', 'Published'] as const).map((st) => (
                         <label
                           key={st}

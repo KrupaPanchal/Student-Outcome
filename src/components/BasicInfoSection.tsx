@@ -90,20 +90,20 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           <Calendar className="w-4 h-4 text-indigo-600" />
           Participated in the Academic Year <span className="text-rose-500">*</span>
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {ACADEMIC_YEARS.map((year) => {
             const isSelected = academicYear === year;
             return (
               <label
                 key={year}
                 htmlFor={`academic-year-${year}`}
-                className={`relative flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`relative flex items-center justify-between p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-600/20 text-indigo-900 font-semibold shadow-xs'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
-                <span className="text-sm">{year}</span>
+                <span className="text-xs sm:text-sm">{year}</span>
                 <input
                   type="radio"
                   id={`academic-year-${year}`}
@@ -125,20 +125,20 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           <Layers className="w-4 h-4 text-indigo-600" />
           Semester based on the academic year <span className="text-rose-500">*</span>
         </label>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-2.5">
           {SEMESTERS.map((sem) => {
             const isSelected = semester === sem;
             return (
               <label
                 key={sem}
                 htmlFor={`semester-${sem}`}
-                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-lg border cursor-pointer transition-all text-center ${
+                className={`relative flex items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border cursor-pointer transition-all text-center ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-600/20 text-indigo-900 font-bold shadow-xs'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
-                <span className="text-sm">Sem {sem}</span>
+                <span className="text-xs sm:text-sm">Sem {sem}</span>
                 <input
                   type="radio"
                   id={`semester-${sem}`}
@@ -146,7 +146,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                   value={sem}
                   checked={isSelected}
                   onChange={() => setSemester(sem)}
-                  className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500"
                 />
               </label>
             );

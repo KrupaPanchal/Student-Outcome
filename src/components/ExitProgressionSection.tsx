@@ -80,11 +80,11 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
             <label className="block text-xs font-semibold text-slate-700">
               Exit / Progression Stage <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
               {(['Year 2', 'Year 3', 'Year 4'] as const).map((yr) => (
                 <label
                   key={yr}
-                  className={`flex items-center justify-center p-3 rounded-lg border text-sm font-semibold cursor-pointer transition-all ${
+                  className={`flex items-center justify-center p-2 sm:p-3 rounded-lg border text-xs sm:text-sm font-semibold cursor-pointer transition-all text-center ${
                     exitProgression.exitYear === yr
                       ? 'border-indigo-600 bg-indigo-50/60 ring-1 ring-indigo-600/30 text-indigo-950 shadow-xs'
                       : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
