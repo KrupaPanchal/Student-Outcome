@@ -74,51 +74,55 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Mobile-only DB status icon */}
-            <div className="flex md:hidden items-center">
-              <div
-                title={dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border ${
-                  isOnlineDb
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-slate-50 text-slate-700 border-slate-300'
-                }`}
-              >
-                <Database className={`w-3 h-3 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
-                <span className="hidden sm:inline">
-                  {dbStatus.isNeon ? 'Neon' : dbStatus.isMongo ? 'Mongo' : 'Local'}
-                </span>
-                <span
-                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                    isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+            {/* Mobile-only DB status icon (Admin Only) */}
+            {isAdmin && (
+              <div className="flex md:hidden items-center">
+                <div
+                  title={dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border ${
+                    isOnlineDb
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : 'bg-slate-50 text-slate-700 border-slate-300'
                   }`}
-                />
+                >
+                  <Database className={`w-3 h-3 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
+                  <span className="hidden sm:inline">
+                    {dbStatus.isNeon ? 'Neon' : dbStatus.isMongo ? 'Mongo' : 'Local'}
+                  </span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                    }`}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right / Bottom Controls */}
           <div className="flex items-center justify-between md:justify-end gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
 
-            {/* Desktop DB Status Badge */}
-            <div
-              id="db-status-badge"
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
-                isOnlineDb
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-slate-50 text-slate-700 border-slate-300'
-              }`}
-            >
-              <Database className={`w-3.5 h-3.5 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
-              <span>
-                {dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
-              </span>
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+            {/* Desktop DB Status Badge (Admin Only) */}
+            {isAdmin && (
+              <div
+                id="db-status-badge"
+                className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
+                  isOnlineDb
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-50 text-slate-700 border-slate-300'
                 }`}
-              />
-            </div>
+              >
+                <Database className={`w-3.5 h-3.5 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
+                <span>
+                  {dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
+                </span>
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                />
+              </div>
+            )}
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
