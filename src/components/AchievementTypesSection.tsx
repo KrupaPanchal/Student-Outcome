@@ -23,45 +23,45 @@ import {
 import { FileUploadField } from './FileUploadField';
 
 interface AchievementTypesSectionProps {
-  selectedCategories: AchievementCategory[];
+  selectedCategories?: AchievementCategory[];
   toggleCategory?: (cat: AchievementCategory) => void;
   onToggleCategory?: (cat: AchievementCategory) => void;
 
   // Standard Events CRUD
-  competitionAchievements: Record<string, CompetitionAchievement[]>;
-  addCompetitionEntry: (cat: string) => void;
-  updateCompetitionEntry: (cat: string, index: number, updates: Partial<CompetitionAchievement>) => void;
-  removeCompetitionEntry: (cat: string, index: number) => void;
+  competitionAchievements?: Record<string, CompetitionAchievement[] | CompetitionAchievement>;
+  addCompetitionEntry?: (cat: string) => void;
+  updateCompetitionEntry?: (cat: string, index: number, updates: Partial<CompetitionAchievement>) => void;
+  removeCompetitionEntry?: (cat: string, index: number) => void;
 
   // Patent CRUD
-  patentDetails: PatentDetail[];
-  addPatent: () => void;
-  updatePatent: (index: number, updates: Partial<PatentDetail>) => void;
-  removePatent: (index: number) => void;
+  patentDetails?: PatentDetail[];
+  addPatent?: () => void;
+  updatePatent?: (index: number, updates: Partial<PatentDetail>) => void;
+  removePatent?: (index: number) => void;
 
   // Startup CRUD
-  startupDetails: StartupDetail[];
-  addStartup: () => void;
-  updateStartup: (index: number, updates: Partial<StartupDetail>) => void;
-  removeStartup: (index: number) => void;
+  startupDetails?: StartupDetail[];
+  addStartup?: () => void;
+  updateStartup?: (index: number, updates: Partial<StartupDetail>) => void;
+  removeStartup?: (index: number) => void;
 
   // Funded Project CRUD
-  fundedProjectDetails: FundedProjectDetail[];
-  addFundedProject: () => void;
-  updateFundedProject: (index: number, updates: Partial<FundedProjectDetail>) => void;
-  removeFundedProject: (index: number) => void;
+  fundedProjectDetails?: FundedProjectDetail[];
+  addFundedProject?: () => void;
+  updateFundedProject?: (index: number, updates: Partial<FundedProjectDetail>) => void;
+  removeFundedProject?: (index: number) => void;
 
   // SSIP Project CRUD
-  ssipProjectDetails: SSIPProjectDetail[];
-  addSSIPProject: () => void;
-  updateSSIPProject: (index: number, updates: Partial<SSIPProjectDetail>) => void;
-  removeSSIPProject: (index: number) => void;
+  ssipProjectDetails?: SSIPProjectDetail[];
+  addSSIPProject?: () => void;
+  updateSSIPProject?: (index: number, updates: Partial<SSIPProjectDetail>) => void;
+  removeSSIPProject?: (index: number) => void;
 
   // Research Publication CRUD
-  researchPublicationDetails: ResearchPublicationDetail[];
-  addResearchPublication: () => void;
-  updateResearchPublication: (index: number, updates: Partial<ResearchPublicationDetail>) => void;
-  removeResearchPublication: (index: number) => void;
+  researchPublicationDetails?: ResearchPublicationDetail[];
+  addResearchPublication?: () => void;
+  updateResearchPublication?: (index: number, updates: Partial<ResearchPublicationDetail>) => void;
+  removeResearchPublication?: (index: number) => void;
 }
 
 export const ALL_ACHIEVEMENT_CATEGORIES: { id: AchievementCategory; label: string; icon: any }[] = [
@@ -91,30 +91,30 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
   selectedCategories = [],
   toggleCategory,
   onToggleCategory,
-  competitionAchievements,
-  addCompetitionEntry,
-  updateCompetitionEntry,
-  removeCompetitionEntry,
-  patentDetails,
-  addPatent,
-  updatePatent,
-  removePatent,
-  startupDetails,
-  addStartup,
-  updateStartup,
-  removeStartup,
-  fundedProjectDetails,
-  addFundedProject,
-  updateFundedProject,
-  removeFundedProject,
-  ssipProjectDetails,
-  addSSIPProject,
-  updateSSIPProject,
-  removeSSIPProject,
-  researchPublicationDetails,
-  addResearchPublication,
-  updateResearchPublication,
-  removeResearchPublication,
+  competitionAchievements = {},
+  addCompetitionEntry = (_cat: string) => {},
+  updateCompetitionEntry = (_cat: string, _index: number, _updates: Partial<CompetitionAchievement>) => {},
+  removeCompetitionEntry = (_cat: string, _index: number) => {},
+  patentDetails = [],
+  addPatent = () => {},
+  updatePatent = (_index: number, _updates: Partial<PatentDetail>) => {},
+  removePatent = (_index: number) => {},
+  startupDetails = [],
+  addStartup = () => {},
+  updateStartup = (_index: number, _updates: Partial<StartupDetail>) => {},
+  removeStartup = (_index: number) => {},
+  fundedProjectDetails = [],
+  addFundedProject = () => {},
+  updateFundedProject = (_index: number, _updates: Partial<FundedProjectDetail>) => {},
+  removeFundedProject = (_index: number) => {},
+  ssipProjectDetails = [],
+  addSSIPProject = () => {},
+  updateSSIPProject = (_index: number, _updates: Partial<SSIPProjectDetail>) => {},
+  removeSSIPProject = (_index: number) => {},
+  researchPublicationDetails = [],
+  addResearchPublication = () => {},
+  updateResearchPublication = (_index: number, _updates: Partial<ResearchPublicationDetail>) => {},
+  removeResearchPublication = (_index: number) => {},
 }) => {
   const handleToggle = (cat: AchievementCategory) => {
     if (onToggleCategory) {
@@ -123,6 +123,26 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
       toggleCategory(cat);
     }
   };
+
+  const safePatentDetails = patentDetails && patentDetails.length > 0
+    ? patentDetails
+    : [{ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed' as const, filingDate: '' }];
+
+  const safeStartupDetails = startupDetails && startupDetails.length > 0
+    ? startupDetails
+    : [{ startupName: '', studentRole: '', startupStatus: 'Idea Stage' as const, registrationDetails: '' }];
+
+  const safeFundedProjectDetails = fundedProjectDetails && fundedProjectDetails.length > 0
+    ? fundedProjectDetails
+    : [{ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' as const }];
+
+  const safeSSIPProjectDetails = ssipProjectDetails && ssipProjectDetails.length > 0
+    ? ssipProjectDetails
+    : [{ projectTitle: '', ssipStatus: 'Approved' as const, fundingAmount: '' }];
+
+  const safeResearchPublicationDetails = researchPublicationDetails && researchPublicationDetails.length > 0
+    ? researchPublicationDetails
+    : [{ paperTitle: '', journalConferenceName: '', publicationType: 'Journal' as const, publicationStatus: 'Published' as const, doiOrLink: '' }];
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-5 sm:space-y-6" id="achievement-types-section">
@@ -147,9 +167,19 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
           {ALL_ACHIEVEMENT_CATEGORIES.map(({ id, label, icon: Icon }) => {
             const isChecked = selectedCategories.includes(id);
             return (
-              <label
+              <div
                 key={id}
-                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                role="checkbox"
+                aria-checked={isChecked}
+                tabIndex={0}
+                onClick={() => handleToggle(id)}
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    handleToggle(id);
+                  }
+                }}
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer select-none transition-all ${
                   isChecked
                     ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600/30 text-indigo-950 font-semibold shadow-xs'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium'
@@ -157,13 +187,14 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
               >
                 <input
                   type="checkbox"
+                  id={`cat-checkbox-${id.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                   checked={isChecked}
-                  onChange={() => handleToggle(id)}
-                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                  onChange={() => {}}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer pointer-events-none"
                 />
                 <Icon className={`w-4 h-4 shrink-0 ${isChecked ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <span className="text-xs sm:text-sm select-none">{label}</span>
-              </label>
+              </div>
             );
           })}
         </div>
@@ -175,19 +206,22 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {selectedCategories
           .filter((cat) => STANDARD_EVENT_CATEGORIES.includes(cat))
           .map((cat) => {
-            const entries = competitionAchievements[cat] && competitionAchievements[cat].length > 0
-              ? competitionAchievements[cat]
-              : [
-                  {
-                    category: cat,
-                    eventName: '',
-                    organizedBy: '',
-                    level: 'State Level' as const,
-                    participationStatus: 'Participated' as const,
-                    dateOfAchievement: '',
-                    description: '',
-                  },
-                ];
+            const raw = competitionAchievements?.[cat];
+            const entries: CompetitionAchievement[] = Array.isArray(raw) && raw.length > 0
+              ? raw
+              : raw && typeof raw === 'object' && ('eventName' in (raw as any) || 'organizedBy' in (raw as any))
+                ? [raw as CompetitionAchievement]
+                : [
+                    {
+                      category: cat,
+                      eventName: '',
+                      organizedBy: '',
+                      level: 'State Level' as const,
+                      participationStatus: 'Participated' as const,
+                      dateOfAchievement: '',
+                      description: '',
+                    },
+                  ];
 
             return (
               <div
@@ -391,7 +425,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             <div className="flex items-center justify-between border-b border-amber-200 pb-2.5">
               <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-600" />
-                Patent Details ({patentDetails.length})
+                Patent Details ({safePatentDetails.length})
               </h3>
               <button
                 type="button"
@@ -404,13 +438,13 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             </div>
 
             <div className="space-y-4">
-              {patentDetails.map((patent, index) => (
+              {safePatentDetails.map((patent, index) => (
                 <div key={index} className="p-3.5 sm:p-4 bg-white border border-amber-200/80 rounded-lg shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
                       Patent #{index + 1}
                     </span>
-                    {patentDetails.length > 1 && (
+                    {safePatentDetails.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removePatent(index)}
@@ -510,7 +544,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             <div className="flex items-center justify-between border-b border-emerald-200 pb-2.5">
               <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
                 <Rocket className="w-4 h-4 text-emerald-600" />
-                Startup Ventures ({startupDetails.length})
+                Startup Ventures ({safeStartupDetails.length})
               </h3>
               <button
                 type="button"
@@ -523,13 +557,13 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             </div>
 
             <div className="space-y-4">
-              {startupDetails.map((startup, index) => (
+              {safeStartupDetails.map((startup, index) => (
                 <div key={index} className="p-3.5 sm:p-4 bg-white border border-emerald-200/80 rounded-lg shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                       Startup #{index + 1}
                     </span>
-                    {startupDetails.length > 1 && (
+                    {safeStartupDetails.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeStartup(index)}
@@ -630,7 +664,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             <div className="flex items-center justify-between border-b border-blue-200 pb-2.5">
               <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-blue-600" />
-                Funded Projects ({fundedProjectDetails.length})
+                Funded Projects ({safeFundedProjectDetails.length})
               </h3>
               <button
                 type="button"
@@ -643,13 +677,13 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             </div>
 
             <div className="space-y-4">
-              {fundedProjectDetails.map((project, index) => (
+              {safeFundedProjectDetails.map((project, index) => (
                 <div key={index} className="p-3.5 sm:p-4 bg-white border border-blue-200/80 rounded-lg shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
                       Funded Project #{index + 1}
                     </span>
-                    {fundedProjectDetails.length > 1 && (
+                    {safeFundedProjectDetails.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeFundedProject(index)}
@@ -750,7 +784,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             <div className="flex items-center justify-between border-b border-purple-200 pb-2.5">
               <h3 className="text-sm font-bold text-purple-950 flex items-center gap-2">
                 <Award className="w-4 h-4 text-purple-600" />
-                SSIP Project Details ({ssipProjectDetails.length})
+                SSIP Project Details ({safeSSIPProjectDetails.length})
               </h3>
               <button
                 type="button"
@@ -763,13 +797,13 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             </div>
 
             <div className="space-y-4">
-              {ssipProjectDetails.map((ssip, index) => (
+              {safeSSIPProjectDetails.map((ssip, index) => (
                 <div key={index} className="p-3.5 sm:p-4 bg-white border border-purple-200/80 rounded-lg shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-purple-900 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
                       SSIP Project #{index + 1}
                     </span>
-                    {ssipProjectDetails.length > 1 && (
+                    {safeSSIPProjectDetails.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeSSIPProject(index)}
@@ -858,7 +892,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             <div className="flex items-center justify-between border-b border-teal-200 pb-2.5">
               <h3 className="text-sm font-bold text-teal-950 flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-teal-600" />
-                Research Publications ({researchPublicationDetails.length})
+                Research Publications ({safeResearchPublicationDetails.length})
               </h3>
               <button
                 type="button"
@@ -871,13 +905,13 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             </div>
 
             <div className="space-y-4">
-              {researchPublicationDetails.map((pub, index) => (
+              {safeResearchPublicationDetails.map((pub, index) => (
                 <div key={index} className="p-3.5 sm:p-4 bg-white border border-teal-200/80 rounded-lg shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-teal-900 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
                       Publication #{index + 1}
                     </span>
-                    {researchPublicationDetails.length > 1 && (
+                    {safeResearchPublicationDetails.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeResearchPublication(index)}

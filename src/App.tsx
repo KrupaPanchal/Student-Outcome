@@ -89,42 +89,33 @@ export default function App() {
 
   // Achievements
   const [selectedAchievementCategories, setSelectedAchievementCategories] = useState<AchievementCategory[]>([]);
-  const [competitionAchievements, setCompetitionAchievements] = useState<Record<string, CompetitionAchievement>>({});
+  const [competitionAchievements, setCompetitionAchievements] = useState<Record<string, CompetitionAchievement[]>>({});
 
-  const [patentDetail, setPatentDetail] = useState<PatentDetail>({
-    patentTitle: '',
-    patentAppNumber: '',
-    patentStatus: 'Filed',
-    filingDate: '',
-  });
+  const [patentDetails, setPatentDetails] = useState<PatentDetail[]>([
+    { patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' },
+  ]);
 
-  const [startupDetail, setStartupDetail] = useState<StartupDetail>({
-    startupName: '',
-    studentRole: '',
-    startupStatus: 'Idea Stage',
-    registrationDetails: '',
-  });
+  const [startupDetails, setStartupDetails] = useState<StartupDetail[]>([
+    { startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' },
+  ]);
 
-  const [fundedProjectDetail, setFundedProjectDetail] = useState<FundedProjectDetail>({
-    projectTitle: '',
-    fundingAgency: '',
-    fundingAmount: '',
-    projectStatus: 'Approved',
-  });
+  const [fundedProjectDetails, setFundedProjectDetails] = useState<FundedProjectDetail[]>([
+    { projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' },
+  ]);
 
-  const [ssipProjectDetail, setSSIPProjectDetail] = useState<SSIPProjectDetail>({
-    projectTitle: '',
-    ssipStatus: 'Approved',
-    fundingAmount: '',
-  });
+  const [ssipProjectDetails, setSSIPProjectDetails] = useState<SSIPProjectDetail[]>([
+    { projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' },
+  ]);
 
-  const [researchPublicationDetail, setResearchPublicationDetail] = useState<ResearchPublicationDetail>({
-    paperTitle: '',
-    journalConferenceName: '',
-    publicationType: 'Journal',
-    publicationStatus: 'Published',
-    doiOrLink: '',
-  });
+  const [researchPublicationDetails, setResearchPublicationDetails] = useState<ResearchPublicationDetail[]>([
+    {
+      paperTitle: '',
+      journalConferenceName: '',
+      publicationType: 'Journal',
+      publicationStatus: 'Published',
+      doiOrLink: '',
+    },
+  ]);
 
   // Exit Progression
   const [exitProgression, setExitProgression] = useState<ExitProgression>({
@@ -194,11 +185,32 @@ export default function App() {
     });
   };
 
-  const updateCompetitionAchievement = (cat: string, updates: Partial<CompetitionAchievement>) => {
-    setCompetitionAchievements((prev) => ({
-      ...prev,
-      [cat]: {
-        ...(prev[cat] || {
+  // Multi-entry CRUD for Standard Events / Competitions
+  const addCompetitionEntry = (cat: string) => {
+    setCompetitionAchievements((prev) => {
+      const existing = prev[cat] || [];
+      return {
+        ...prev,
+        [cat]: [
+          ...existing,
+          {
+            category: cat,
+            eventName: '',
+            organizedBy: '',
+            level: 'State Level',
+            participationStatus: 'Participated',
+            dateOfAchievement: '',
+            description: '',
+          },
+        ],
+      };
+    });
+  };
+
+  const updateCompetitionEntry = (cat: string, index: number, updates: Partial<CompetitionAchievement>) => {
+    setCompetitionAchievements((prev) => {
+      const existing = prev[cat] ? [...prev[cat]] : [
+        {
           category: cat,
           eventName: '',
           organizedBy: '',
@@ -206,10 +218,118 @@ export default function App() {
           participationStatus: 'Participated',
           dateOfAchievement: '',
           description: '',
-        }),
-        ...updates,
+        },
+      ];
+      if (existing[index]) {
+        existing[index] = { ...existing[index], ...updates };
+      }
+      return { ...prev, [cat]: existing };
+    });
+  };
+
+  const removeCompetitionEntry = (cat: string, index: number) => {
+    setCompetitionAchievements((prev) => {
+      const existing = prev[cat] ? [...prev[cat]] : [];
+      if (existing.length <= 1) return prev;
+      const next = existing.filter((_, i) => i !== index);
+      return { ...prev, [cat]: next };
+    });
+  };
+
+  // Patent CRUD
+  const addPatent = () => {
+    setPatentDetails((prev) => [
+      ...prev,
+      { patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' },
+    ]);
+  };
+  const updatePatent = (index: number, updates: Partial<PatentDetail>) => {
+    setPatentDetails((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  const removePatent = (index: number) => {
+    setPatentDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  };
+
+  // Startup CRUD
+  const addStartup = () => {
+    setStartupDetails((prev) => [
+      ...prev,
+      { startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' },
+    ]);
+  };
+  const updateStartup = (index: number, updates: Partial<StartupDetail>) => {
+    setStartupDetails((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  const removeStartup = (index: number) => {
+    setStartupDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  };
+
+  // Funded Project CRUD
+  const addFundedProject = () => {
+    setFundedProjectDetails((prev) => [
+      ...prev,
+      { projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' },
+    ]);
+  };
+  const updateFundedProject = (index: number, updates: Partial<FundedProjectDetail>) => {
+    setFundedProjectDetails((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  const removeFundedProject = (index: number) => {
+    setFundedProjectDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  };
+
+  // SSIP Project CRUD
+  const addSSIPProject = () => {
+    setSSIPProjectDetails((prev) => [
+      ...prev,
+      { projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' },
+    ]);
+  };
+  const updateSSIPProject = (index: number, updates: Partial<SSIPProjectDetail>) => {
+    setSSIPProjectDetails((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  const removeSSIPProject = (index: number) => {
+    setSSIPProjectDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  };
+
+  // Research Publication CRUD
+  const addResearchPublication = () => {
+    setResearchPublicationDetails((prev) => [
+      ...prev,
+      {
+        paperTitle: '',
+        journalConferenceName: '',
+        publicationType: 'Journal',
+        publicationStatus: 'Published',
+        doiOrLink: '',
       },
-    }));
+    ]);
+  };
+  const updateResearchPublication = (index: number, updates: Partial<ResearchPublicationDetail>) => {
+    setResearchPublicationDetails((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  const removeResearchPublication = (index: number) => {
+    setResearchPublicationDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   };
 
   const resetForm = () => {
@@ -222,17 +342,17 @@ export default function App() {
     setHigherStudiesProof(undefined);
     setSelectedAchievementCategories([]);
     setCompetitionAchievements({});
-    setPatentDetail({ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' });
-    setStartupDetail({ startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' });
-    setFundedProjectDetail({ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' });
-    setSSIPProjectDetail({ projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' });
-    setResearchPublicationDetail({
+    setPatentDetails([{ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' }]);
+    setStartupDetails([{ startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' }]);
+    setFundedProjectDetails([{ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' }]);
+    setSSIPProjectDetails([{ projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' }]);
+    setResearchPublicationDetails([{
       paperTitle: '',
       journalConferenceName: '',
       publicationType: 'Journal',
       publicationStatus: 'Published',
       doiOrLink: '',
-    });
+    }]);
     setExitProgression({ isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -250,12 +370,70 @@ export default function App() {
     setHigherStudiesUniversityName(sub.higherStudiesUniversityName || '');
     setHigherStudiesProof(sub.higherStudiesProof);
     setSelectedAchievementCategories(sub.selectedAchievementCategories || []);
-    setCompetitionAchievements((sub.competitionAchievements as any) || {});
-    setPatentDetail(sub.patentDetail || { patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' });
-    setStartupDetail(sub.startupDetail || { startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' });
-    setFundedProjectDetail(sub.fundedProjectDetail || { projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' });
-    setSSIPProjectDetail(sub.ssipProjectDetail || { projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' });
-    setResearchPublicationDetail(sub.researchPublicationDetail || { paperTitle: '', journalConferenceName: '', publicationType: 'Journal', publicationStatus: 'Published', doiOrLink: '' });
+
+    // Normalize competitionAchievements
+    const rawComp = sub.competitionAchievements || {};
+    const normComp: Record<string, CompetitionAchievement[]> = {};
+    for (const [k, v] of Object.entries(rawComp)) {
+      if (Array.isArray(v)) {
+        normComp[k] = v;
+      } else if (v && typeof v === 'object') {
+        normComp[k] = [v as CompetitionAchievement];
+      }
+    }
+    setCompetitionAchievements(normComp);
+
+    // Normalize patents
+    if (sub.patentDetails && sub.patentDetails.length > 0) {
+      setPatentDetails(sub.patentDetails);
+    } else if (sub.patentDetail) {
+      setPatentDetails([sub.patentDetail]);
+    } else {
+      setPatentDetails([{ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' }]);
+    }
+
+    // Normalize startups
+    if (sub.startupDetails && sub.startupDetails.length > 0) {
+      setStartupDetails(sub.startupDetails);
+    } else if (sub.startupDetail) {
+      setStartupDetails([sub.startupDetail]);
+    } else {
+      setStartupDetails([{ startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' }]);
+    }
+
+    // Normalize funded projects
+    if (sub.fundedProjectDetails && sub.fundedProjectDetails.length > 0) {
+      setFundedProjectDetails(sub.fundedProjectDetails);
+    } else if (sub.fundedProjectDetail) {
+      setFundedProjectDetails([sub.fundedProjectDetail]);
+    } else {
+      setFundedProjectDetails([{ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' }]);
+    }
+
+    // Normalize SSIP projects
+    if (sub.ssipProjectDetails && sub.ssipProjectDetails.length > 0) {
+      setSSIPProjectDetails(sub.ssipProjectDetails);
+    } else if (sub.ssipProjectDetail) {
+      setSSIPProjectDetails([sub.ssipProjectDetail]);
+    } else {
+      setSSIPProjectDetails([{ projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' }]);
+    }
+
+    // Normalize research publications
+    if (sub.researchPublicationDetails && sub.researchPublicationDetails.length > 0) {
+      setResearchPublicationDetails(sub.researchPublicationDetails);
+    } else if (sub.researchPublicationDetail) {
+      setResearchPublicationDetails([sub.researchPublicationDetail]);
+    } else {
+      setResearchPublicationDetails([{
+        paperTitle: '',
+        journalConferenceName: '',
+        publicationType: 'Journal',
+        publicationStatus: 'Published',
+        doiOrLink: '',
+      }]);
+    }
+
     setExitProgression(sub.exitProgression || { isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -307,11 +485,12 @@ export default function App() {
 
     // Check SSIP Project requirement if selected
     if (selectedAchievementCategories.includes('SSIP Project')) {
-      if (!ssipProjectDetail.projectTitle.trim()) {
+      const firstSSIP = ssipProjectDetails[0];
+      if (!firstSSIP || !firstSSIP.projectTitle.trim()) {
         setSubmitError('Please enter the SSIP Project Title.');
         return;
       }
-      if (!ssipProjectDetail.proofFile) {
+      if (!firstSSIP.proofFile) {
         setSubmitError('SSIP Proof document upload is required for SSIP Projects.');
         return;
       }
@@ -343,12 +522,19 @@ export default function App() {
       higherStudiesProof,
       selectedAchievementCategories,
       competitionAchievements,
-      patentDetail: selectedAchievementCategories.includes('Patent') ? patentDetail : undefined,
-      startupDetail: selectedAchievementCategories.includes('Startup') ? startupDetail : undefined,
-      fundedProjectDetail: selectedAchievementCategories.includes('Funded Project') ? fundedProjectDetail : undefined,
-      ssipProjectDetail: selectedAchievementCategories.includes('SSIP Project') ? ssipProjectDetail : undefined,
+      patentDetails: selectedAchievementCategories.includes('Patent') ? patentDetails : undefined,
+      patentDetail: selectedAchievementCategories.includes('Patent') ? patentDetails[0] : undefined,
+      startupDetails: selectedAchievementCategories.includes('Startup') ? startupDetails : undefined,
+      startupDetail: selectedAchievementCategories.includes('Startup') ? startupDetails[0] : undefined,
+      fundedProjectDetails: selectedAchievementCategories.includes('Funded Project') ? fundedProjectDetails : undefined,
+      fundedProjectDetail: selectedAchievementCategories.includes('Funded Project') ? fundedProjectDetails[0] : undefined,
+      ssipProjectDetails: selectedAchievementCategories.includes('SSIP Project') ? ssipProjectDetails : undefined,
+      ssipProjectDetail: selectedAchievementCategories.includes('SSIP Project') ? ssipProjectDetails[0] : undefined,
+      researchPublicationDetails: selectedAchievementCategories.includes('Research Publication')
+        ? researchPublicationDetails
+        : undefined,
       researchPublicationDetail: selectedAchievementCategories.includes('Research Publication')
-        ? researchPublicationDetail
+        ? researchPublicationDetails[0]
         : undefined,
       exitProgression: exitProgression.isExiting ? exitProgression : undefined,
       submittedAt: new Date().toISOString(),
@@ -527,17 +713,29 @@ export default function App() {
               onToggleCategory={handleToggleCategory}
               toggleCategory={handleToggleCategory}
               competitionAchievements={competitionAchievements}
-              updateCompetitionAchievement={updateCompetitionAchievement}
-              patentDetail={patentDetail}
-              setPatentDetail={setPatentDetail}
-              startupDetail={startupDetail}
-              setStartupDetail={setStartupDetail}
-              fundedProjectDetail={fundedProjectDetail}
-              setFundedProjectDetail={setFundedProjectDetail}
-              ssipProjectDetail={ssipProjectDetail}
-              setSSIPProjectDetail={setSSIPProjectDetail}
-              researchPublicationDetail={researchPublicationDetail}
-              setResearchPublicationDetail={setResearchPublicationDetail}
+              addCompetitionEntry={addCompetitionEntry}
+              updateCompetitionEntry={updateCompetitionEntry}
+              removeCompetitionEntry={removeCompetitionEntry}
+              patentDetails={patentDetails}
+              addPatent={addPatent}
+              updatePatent={updatePatent}
+              removePatent={removePatent}
+              startupDetails={startupDetails}
+              addStartup={addStartup}
+              updateStartup={updateStartup}
+              removeStartup={removeStartup}
+              fundedProjectDetails={fundedProjectDetails}
+              addFundedProject={addFundedProject}
+              updateFundedProject={updateFundedProject}
+              removeFundedProject={removeFundedProject}
+              ssipProjectDetails={ssipProjectDetails}
+              addSSIPProject={addSSIPProject}
+              updateSSIPProject={updateSSIPProject}
+              removeSSIPProject={removeSSIPProject}
+              researchPublicationDetails={researchPublicationDetails}
+              addResearchPublication={addResearchPublication}
+              updateResearchPublication={updateResearchPublication}
+              removeResearchPublication={removeResearchPublication}
             />
 
             {/* Section 4: Exit / Progression After Year 2 / 3 / 4 */}
@@ -643,6 +841,13 @@ export default function App() {
         }}
       />
 
+      {/* Footer */}
+      <footer className="mt-auto py-4 text-center border-t border-slate-100 bg-white">
+        <p className="text-xs text-slate-400">
+          Developed by{' '}
+          <span className="font-semibold text-indigo-600">Krupa Panchal</span>
+        </p>
+      </footer>
 
     </div>
   );

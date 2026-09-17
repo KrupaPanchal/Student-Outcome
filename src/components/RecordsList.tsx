@@ -264,18 +264,6 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEdit(item);
-                      }}
-                      className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
-                      title="Edit record"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
                         setConfirmDeleteTarget({
                           id,
                           name: item.fullName,
@@ -424,128 +412,147 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                         <div className="grid grid-cols-1 gap-2.5">
                           {/* Standard events */}
                           {Object.entries(item.competitionAchievements || {}).map(([cat, rawEv]) => {
-                            const ev = rawEv as CompetitionAchievement;
-                            return (
-                            <div key={cat} className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-indigo-900">{cat}: {ev.eventName}</span>
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 font-semibold">
-                                  {ev.level} • {ev.participationStatus}
-                                </span>
+                            const evList: CompetitionAchievement[] = Array.isArray(rawEv)
+                              ? rawEv
+                              : (rawEv && typeof rawEv === 'object' ? [rawEv as CompetitionAchievement] : []);
+                            return evList.map((ev, idx) => (
+                              <div key={`${cat}-${idx}`} className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-indigo-900">
+                                    {cat}{evList.length > 1 ? ` #${idx + 1}` : ''}: {ev.eventName || 'Untitled Event'}
+                                  </span>
+                                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 font-semibold">
+                                    {ev.level} • {ev.participationStatus}
+                                  </span>
+                                </div>
+                                <p className="text-slate-600">Organized by: {ev.organizedBy} | Date: {ev.dateOfAchievement}</p>
+                                {ev.description && <p className="text-slate-500 italic">{ev.description}</p>}
+                                {ev.certificateFile && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewFile(ev.certificateFile!)}
+                                    className="mt-1 px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 flex items-center gap-1 font-medium"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    View Certificate ({ev.certificateFile.name})
+                                  </button>
+                                )}
                               </div>
-                              <p className="text-slate-600">Organized by: {ev.organizedBy} | Date: {ev.dateOfAchievement}</p>
-                              {ev.description && <p className="text-slate-500 italic">{ev.description}</p>}
-                              {ev.certificateFile && (
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewFile(ev.certificateFile!)}
-                                  className="mt-1 px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 flex items-center gap-1 font-medium"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  View Certificate ({ev.certificateFile.name})
-                                </button>
-                              )}
-                            </div>
-                          );
+                            ));
                           })}
 
                           {/* Patent */}
-                          {item.patentDetail?.patentTitle && (
-                            <div className="p-3 bg-white rounded-lg border border-amber-200 space-y-1">
-                              <span className="font-bold text-amber-900">Patent: {item.patentDetail.patentTitle}</span>
-                              <p className="text-slate-600">App No: {item.patentDetail.patentAppNumber} • Status: {item.patentDetail.patentStatus} • Date: {item.patentDetail.filingDate}</p>
-                              {item.patentDetail.proofFile && (
+                          {((item.patentDetails && item.patentDetails.length > 0)
+                            ? item.patentDetails
+                            : (item.patentDetail?.patentTitle ? [item.patentDetail] : [])
+                          ).map((pat, idx) => pat.patentTitle && (
+                            <div key={`pat-${idx}`} className="p-3 bg-white rounded-lg border border-amber-200 space-y-1">
+                              <span className="font-bold text-amber-900">Patent{item.patentDetails && item.patentDetails.length > 1 ? ` #${idx + 1}` : ''}: {pat.patentTitle}</span>
+                              <p className="text-slate-600">App No: {pat.patentAppNumber} • Status: {pat.patentStatus} • Date: {pat.filingDate}</p>
+                              {pat.proofFile && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewFile(item.patentDetail!.proofFile!)}
+                                  onClick={() => setPreviewFile(pat.proofFile!)}
                                   className="mt-1 px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 flex items-center gap-1 font-medium"
                                 >
                                   <Eye className="w-3 h-3" />
-                                  View Patent Proof ({item.patentDetail.proofFile.name})
+                                  View Patent Proof ({pat.proofFile.name})
                                 </button>
                               )}
                             </div>
-                          )}
+                          ))}
 
                           {/* Startup */}
-                          {item.startupDetail?.startupName && (
-                            <div className="p-3 bg-white rounded-lg border border-emerald-200 space-y-1">
-                              <span className="font-bold text-emerald-900">Startup: {item.startupDetail.startupName}</span>
-                              <p className="text-slate-600">Role: {item.startupDetail.studentRole} • Status: {item.startupDetail.startupStatus}</p>
-                              {item.startupDetail.registrationDetails && (
-                                <p className="text-slate-500">Reg: {item.startupDetail.registrationDetails}</p>
+                          {((item.startupDetails && item.startupDetails.length > 0)
+                            ? item.startupDetails
+                            : (item.startupDetail?.startupName ? [item.startupDetail] : [])
+                          ).map((startup, idx) => startup.startupName && (
+                            <div key={`startup-${idx}`} className="p-3 bg-white rounded-lg border border-emerald-200 space-y-1">
+                              <span className="font-bold text-emerald-900">Startup{item.startupDetails && item.startupDetails.length > 1 ? ` #${idx + 1}` : ''}: {startup.startupName}</span>
+                              <p className="text-slate-600">Role: {startup.studentRole} • Status: {startup.startupStatus}</p>
+                              {startup.registrationDetails && (
+                                <p className="text-slate-500">Reg: {startup.registrationDetails}</p>
                               )}
-                              {item.startupDetail.proofFile && (
+                              {startup.proofFile && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewFile(item.startupDetail!.proofFile!)}
+                                  onClick={() => setPreviewFile(startup.proofFile!)}
                                   className="mt-1 px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1 font-medium"
                                 >
                                   <Eye className="w-3 h-3" />
-                                  View Startup Proof ({item.startupDetail.proofFile.name})
+                                  View Startup Proof ({startup.proofFile.name})
                                 </button>
                               )}
                             </div>
-                          )}
+                          ))}
 
                           {/* Funded Project */}
-                          {item.fundedProjectDetail?.projectTitle && (
-                            <div className="p-3 bg-white rounded-lg border border-blue-200 space-y-1">
-                              <span className="font-bold text-blue-900">Funded Project: {item.fundedProjectDetail.projectTitle}</span>
-                              <p className="text-slate-600">Agency: {item.fundedProjectDetail.fundingAgency} • Amount: {item.fundedProjectDetail.fundingAmount} • Status: {item.fundedProjectDetail.projectStatus}</p>
-                              {item.fundedProjectDetail.proofFile && (
+                          {((item.fundedProjectDetails && item.fundedProjectDetails.length > 0)
+                            ? item.fundedProjectDetails
+                            : (item.fundedProjectDetail?.projectTitle ? [item.fundedProjectDetail] : [])
+                          ).map((proj, idx) => proj.projectTitle && (
+                            <div key={`proj-${idx}`} className="p-3 bg-white rounded-lg border border-blue-200 space-y-1">
+                              <span className="font-bold text-blue-900">Funded Project{item.fundedProjectDetails && item.fundedProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {proj.projectTitle}</span>
+                              <p className="text-slate-600">Agency: {proj.fundingAgency} • Amount: {proj.fundingAmount} • Status: {proj.projectStatus}</p>
+                              {proj.proofFile && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewFile(item.fundedProjectDetail!.proofFile!)}
+                                  onClick={() => setPreviewFile(proj.proofFile!)}
                                   className="mt-1 px-2.5 py-1 rounded bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 flex items-center gap-1 font-medium"
                                 >
                                   <Eye className="w-3 h-3" />
-                                  View Funding Proof ({item.fundedProjectDetail.proofFile.name})
+                                  View Funding Proof ({proj.proofFile.name})
                                 </button>
                               )}
                             </div>
-                          )}
+                          ))}
 
                           {/* SSIP Project */}
-                          {item.ssipProjectDetail?.projectTitle && (
-                            <div className="p-3 bg-white rounded-lg border border-purple-200 space-y-1">
-                              <span className="font-bold text-purple-900">SSIP Project: {item.ssipProjectDetail.projectTitle}</span>
-                              <p className="text-slate-600">Status: {item.ssipProjectDetail.ssipStatus} • Amount: {item.ssipProjectDetail.fundingAmount}</p>
-                              {item.ssipProjectDetail.proofFile && (
+                          {((item.ssipProjectDetails && item.ssipProjectDetails.length > 0)
+                            ? item.ssipProjectDetails
+                            : (item.ssipProjectDetail?.projectTitle ? [item.ssipProjectDetail] : [])
+                          ).map((ssip, idx) => ssip.projectTitle && (
+                            <div key={`ssip-${idx}`} className="p-3 bg-white rounded-lg border border-purple-200 space-y-1">
+                              <span className="font-bold text-purple-900">SSIP Project{item.ssipProjectDetails && item.ssipProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {ssip.projectTitle}</span>
+                              <p className="text-slate-600">Status: {ssip.ssipStatus} • Amount: {ssip.fundingAmount}</p>
+                              {ssip.proofFile && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewFile(item.ssipProjectDetail!.proofFile!)}
+                                  onClick={() => setPreviewFile(ssip.proofFile!)}
                                   className="mt-1 px-2.5 py-1 rounded bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 flex items-center gap-1 font-medium"
                                 >
                                   <Eye className="w-3 h-3" />
-                                  View SSIP Proof ({item.ssipProjectDetail.proofFile.name})
+                                  View SSIP Proof ({ssip.proofFile.name})
                                 </button>
                               )}
                             </div>
-                          )}
+                          ))}
 
                           {/* Research Publication */}
-                          {item.researchPublicationDetail?.paperTitle && (
-                            <div className="p-3 bg-white rounded-lg border border-teal-200 space-y-1">
-                              <span className="font-bold text-teal-900">Research Publication: {item.researchPublicationDetail.paperTitle}</span>
+                          {((item.researchPublicationDetails && item.researchPublicationDetails.length > 0)
+                            ? item.researchPublicationDetails
+                            : (item.researchPublicationDetail?.paperTitle ? [item.researchPublicationDetail] : [])
+                          ).map((pub, idx) => pub.paperTitle && (
+                            <div key={`pub-${idx}`} className="p-3 bg-white rounded-lg border border-teal-200 space-y-1">
+                              <span className="font-bold text-teal-900">Research Publication{item.researchPublicationDetails && item.researchPublicationDetails.length > 1 ? ` #${idx + 1}` : ''}: {pub.paperTitle}</span>
                               <p className="text-slate-600">
-                                Venue: {item.researchPublicationDetail.journalConferenceName} • Type: {item.researchPublicationDetail.publicationType} • Status: {item.researchPublicationDetail.publicationStatus}
+                                Venue: {pub.journalConferenceName} • Type: {pub.publicationType} • Status: {pub.publicationStatus}
                               </p>
-                              {item.researchPublicationDetail.doiOrLink && (
-                                <p className="text-slate-500">DOI / Link: {item.researchPublicationDetail.doiOrLink}</p>
+                              {pub.doiOrLink && (
+                                <p className="text-slate-500">DOI / Link: {pub.doiOrLink}</p>
                               )}
-                              {item.researchPublicationDetail.proofFile && (
+                              {pub.proofFile && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewFile(item.researchPublicationDetail!.proofFile!)}
+                                  onClick={() => setPreviewFile(pub.proofFile!)}
                                   className="mt-1 px-2.5 py-1 rounded bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100 flex items-center gap-1 font-medium"
                                 >
                                   <Eye className="w-3 h-3" />
-                                  View Publication Proof ({item.researchPublicationDetail.proofFile.name})
+                                  View Publication Proof ({pub.proofFile.name})
                                 </button>
                               )}
                             </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     )}

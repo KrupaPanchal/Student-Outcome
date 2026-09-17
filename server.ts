@@ -453,7 +453,7 @@ async function start() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`Student Outcome Portal Server running at http://0.0.0.0:${PORT}`);
   });
 }

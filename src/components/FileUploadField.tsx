@@ -16,11 +16,11 @@ interface FileUploadFieldProps {
 export const FileUploadField: React.FC<FileUploadFieldProps> = ({
   id,
   label,
-  description = 'Upload 1 supported file. Max 2 MB (PDF or Image).',
+  description = 'Upload 1 supported file. Max 2 MB (PDF only).',
   required = false,
   value,
   onChange,
-  accept = '.pdf,image/jpeg,image/png,image/webp',
+  accept = '.pdf',
   maxSizeMB = 2,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +31,13 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
   const processFile = (file: File) => {
     setErrorMessage(null);
     const maxBytes = maxSizeMB * 1024 * 1024;
+
+    // Validate PDF only
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      setErrorMessage('Only PDF files are allowed. Please upload a valid PDF document.');
+      return;
+    }
 
     if (file.size > maxBytes) {
       setErrorMessage(`File size exceeds ${maxSizeMB} MB limit (${(file.size / (1024 * 1024)).toFixed(2)} MB). Please upload a smaller file.`);
@@ -167,7 +174,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
             <p className="text-sm font-medium text-slate-700">
               <span className="text-indigo-600 font-semibold hover:underline">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-slate-400">PDF, JPG, PNG or WEBP (Max {maxSizeMB} MB)</p>
+            <p className="text-xs text-slate-400">PDF only (Max {maxSizeMB} MB)</p>
           </div>
         </div>
       )}
