@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Lock,
   LogOut,
+  Settings,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -22,9 +23,11 @@ interface HeaderProps {
     status: string;
   };
   isAdmin: boolean;
+  adminUsername?: string;
   onOpenAdminModal: () => void;
   onAdminLogout: () => void;
   onOpenMongoModal: () => void;
+  onOpenSettings: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,9 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
   submissionsCount,
   dbStatus,
   isAdmin,
+  adminUsername,
   onOpenAdminModal,
   onAdminLogout,
   onOpenMongoModal,
+  onOpenSettings,
 }) => {
   const isOnlineDb = Boolean(dbStatus.isNeon || dbStatus.isMongo);
 
@@ -92,14 +97,22 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
-              <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full text-purple-900 text-xs font-semibold whitespace-nowrap">
+              <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full whitespace-nowrap">
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span>Admin</span>
+                <span className="text-xs font-semibold text-purple-900 mx-0.5">{adminUsername || 'Admin'}</span>
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  title="Admin Settings"
+                  className="p-0.5 text-purple-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={onAdminLogout}
-                  title="Sign out"
-                  className="ml-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-700 hover:text-rose-900 transition-colors cursor-pointer text-[11px] font-semibold"
+                  title="Sign Out"
+                  className="flex items-center gap-1 ml-0.5 px-1.5 py-0.5 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-700 text-[11px] font-semibold transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3 h-3" />
                   Sign Out

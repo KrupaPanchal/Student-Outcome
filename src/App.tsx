@@ -35,6 +35,7 @@ import { ExitProgressionSection } from './components/ExitProgressionSection';
 import { RecordsList } from './components/RecordsList';
 
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdminSettingsModal } from './components/AdminSettingsModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
@@ -42,6 +43,10 @@ export default function App() {
     return sessionStorage.getItem('portal_admin_auth') === 'true';
   });
   const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [adminUsername, setAdminUsername] = useState<string>(
+    () => sessionStorage.getItem('portal_admin_user') || 'admin'
+  );
 
   const [dbStatus, setDbStatus] = useState<{
     database: string;
@@ -364,9 +369,11 @@ export default function App() {
         submissionsCount={submissions.length}
         dbStatus={dbStatus}
         isAdmin={isAdmin}
+        adminUsername={adminUsername}
         onOpenAdminModal={() => setAdminModalOpen(true)}
         onAdminLogout={handleAdminLogout}
         onOpenMongoModal={() => {}}
+        onOpenSettings={() => setSettingsModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -546,8 +553,20 @@ export default function App() {
         onClose={() => setAdminModalOpen(false)}
         onLoginSuccess={() => {
           setIsAdmin(true);
+          setAdminUsername(sessionStorage.getItem('portal_admin_user') || 'admin');
           setCurrentTab('records');
           fetchSubmissions();
+        }}
+      />
+
+      {/* Admin Settings Dialog */}
+      <AdminSettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        currentUsername={adminUsername}
+        onCredentialsChanged={(newUsername) => {
+          setAdminUsername(newUsername);
+          sessionStorage.setItem('portal_admin_user', newUsername);
         }}
       />
 

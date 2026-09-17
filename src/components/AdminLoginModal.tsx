@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Lock, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { getAdminCredentials } from './AdminSettingsModal';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -26,14 +27,11 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setError(null);
 
     setTimeout(() => {
-      // Default admin credentials
-      const validUsername = 'admin';
-      const validPasswords = ['admin123', 'admin@2024', 'krupa123', 'svgu@admin'];
+      const creds = getAdminCredentials();
+      const inputUser = username.trim().toLowerCase();
+      const inputPass = password.trim();
 
-      if (
-        (username.trim().toLowerCase() === validUsername || username.trim().toLowerCase() === 'krupa') &&
-        validPasswords.includes(password.trim())
-      ) {
+      if (inputUser === creds.username.toLowerCase() && inputPass === creds.password) {
         sessionStorage.setItem('portal_admin_auth', 'true');
         sessionStorage.setItem('portal_admin_user', username.trim());
         onLoginSuccess();
