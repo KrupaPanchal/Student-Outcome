@@ -168,44 +168,45 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Divider */}
-            <div className="hidden md:block w-px h-5 bg-slate-200 shrink-0" />
+            {/* Navigation Tabs (Admin Only) */}
+            {isAdmin && (
+              <>
+                {/* Divider */}
+                <div className="hidden md:block w-px h-5 bg-slate-200 shrink-0" />
 
-            {/* Navigation Tabs */}
-            <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">
-              <button
-                type="button"
-                id="nav-tab-form"
-                onClick={() => handleTabChange('form')}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                  currentTab === 'form'
-                    ? 'bg-white text-indigo-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <PlusCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                <span>Data Form</span>
-              </button>
-              <button
-                type="button"
-                id="nav-tab-records"
-                onClick={() => handleTabChange('records')}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                  currentTab === 'records'
-                    ? 'bg-white text-indigo-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <FileSpreadsheet className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                <span>Submissions</span>
-                {!isAdmin && <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400" />}
-                {isAdmin && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
-                    {submissionsCount}
-                  </span>
-                )}
-              </button>
-            </div>
+                <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">
+                  <button
+                    type="button"
+                    id="nav-tab-form"
+                    onClick={() => handleTabChange('form')}
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                      currentTab === 'form'
+                        ? 'bg-white text-indigo-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <PlusCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                    <span>Data Form</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="nav-tab-records"
+                    onClick={() => handleTabChange('records')}
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                      currentTab === 'records'
+                        ? 'bg-white text-indigo-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                    <span>Submissions</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                      {submissionsCount}
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
         </div>
