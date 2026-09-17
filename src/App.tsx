@@ -37,15 +37,20 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
   const [dbStatus, setDbStatus] = useState<{
     database: string;
-    isMongo: boolean;
+    isNeon?: boolean;
+    isMongo?: boolean;
+    neonConfigured?: boolean;
     mongoConfigured?: boolean;
+    neonError?: string;
     mongoError?: string;
     mongoErrorDetail?: string;
     status: string;
     totalSubmissions: number;
   }>({
-    database: 'Local Storage',
+    database: 'Neon PostgreSQL (Active)',
+    isNeon: true,
     isMongo: false,
+    neonConfigured: true,
     mongoConfigured: false,
     status: 'ok',
     totalSubmissions: 0,
@@ -120,9 +125,12 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setDbStatus({
-          database: data.database || 'Local Storage',
+          database: data.database || 'Neon PostgreSQL (Active)',
+          isNeon: Boolean(data.isNeon),
           isMongo: Boolean(data.isMongo),
+          neonConfigured: Boolean(data.neonConfigured),
           mongoConfigured: Boolean(data.mongoConfigured),
+          neonError: data.neonError,
           mongoError: data.mongoError,
           mongoErrorDetail: data.mongoErrorDetail,
           status: data.status,
@@ -130,7 +138,7 @@ export default function App() {
         });
       }
     } catch {
-      // Ignore in pure static mode
+      // Fallback
     }
   };
 
