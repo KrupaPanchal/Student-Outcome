@@ -71,15 +71,12 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2 shrink-0">
 
             {/* Neon DB Status Badge */}
-            <button
-              type="button"
+            <div
               id="db-status-badge"
-              onClick={onOpenMongoModal}
-              title="Click to view Neon Database status"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
                 isOnlineDb
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-50 text-slate-700 border-slate-300'
               }`}
             >
               <Database className={`w-3.5 h-3.5 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
@@ -91,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
                   isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
                 }`}
               />
-            </button>
+            </div>
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (

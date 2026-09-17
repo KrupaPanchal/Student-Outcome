@@ -33,7 +33,7 @@ import { HigherStudiesSection } from './components/HigherStudiesSection';
 import { AchievementTypesSection } from './components/AchievementTypesSection';
 import { ExitProgressionSection } from './components/ExitProgressionSection';
 import { RecordsList } from './components/RecordsList';
-import { MongoFlaskModal } from './components/MongoFlaskModal';
+
 import { AdminLoginModal } from './components/AdminLoginModal';
 
 export default function App() {
@@ -68,7 +68,7 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [mongoModalOpen, setMongoModalOpen] = useState(false);
+
 
   // Form State
   const [enrollmentNumber, setEnrollmentNumber] = useState('');
@@ -366,29 +366,12 @@ export default function App() {
         isAdmin={isAdmin}
         onOpenAdminModal={() => setAdminModalOpen(true)}
         onAdminLogout={handleAdminLogout}
-        onOpenMongoModal={() => setMongoModalOpen(true)}
+        onOpenMongoModal={() => {}}
       />
 
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
-        {/* Storage Notice Banner if MongoDB is offline */}
-        {!dbStatus.isMongo && dbStatus.mongoConfigured && (
-          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-              <span>
-                <strong>Zero Data Loss Guaranteed:</strong> Persistent Local Storage is actively safeguarding all records. Cloud MongoDB is currently unreachable (DNS lookup notice).
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setMongoModalOpen(true)}
-              className="px-3 py-1 bg-amber-200/90 hover:bg-amber-300 text-amber-950 font-semibold rounded-lg shrink-0 self-start sm:self-auto cursor-pointer transition-colors text-[11px]"
-            >
-              Diagnose &amp; Test MongoDB
-            </button>
-          </div>
-        )}
+
 
         {/* Banner Alert for Success */}
         {submitSuccess && (
@@ -568,16 +551,7 @@ export default function App() {
         }}
       />
 
-      {/* Database Diagnostic Info Dialog */}
-      <MongoFlaskModal
-        isOpen={mongoModalOpen}
-        onClose={() => setMongoModalOpen(false)}
-        dbStatus={dbStatus}
-        onRefreshHealth={() => {
-          fetchDbHealth();
-          fetchSubmissions();
-        }}
-      />
+
     </div>
   );
 }
