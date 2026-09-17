@@ -75,7 +75,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               id="fullname-input"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Patel Krupa Rameshchandra"
+              placeholder="e.g. Shah Priya Rajeshbhai"
               required
               className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all capitalize"
             />

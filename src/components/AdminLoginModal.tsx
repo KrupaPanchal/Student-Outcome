@@ -119,12 +119,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-900 text-xs">
-            <div className="font-semibold text-indigo-950 mb-0.5">Default Admin Login:</div>
-            <div className="text-[11px] text-indigo-800">
-              Username: <code className="bg-white/80 px-1 py-0.5 rounded font-mono">admin</code> &bull; Password: <code className="bg-white/80 px-1 py-0.5 rounded font-mono">admin123</code>
-            </div>
-          </div>
+
 
           <div className="pt-2 flex justify-end gap-2.5">
             <button
