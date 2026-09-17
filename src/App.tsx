@@ -377,7 +377,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 space-y-4 sm:space-y-6">
 
 
         {/* Banner Alert for Success */}

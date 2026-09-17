@@ -29,7 +29,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-6" id="exit-progression-section">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-5 sm:space-y-6" id="exit-progression-section">
       <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
         <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
           4

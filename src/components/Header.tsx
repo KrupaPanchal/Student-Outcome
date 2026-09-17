@@ -53,32 +53,57 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm" id="app-header">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs" id="app-header">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between py-2.5 md:py-0 md:h-16 gap-2.5 md:gap-4">
 
-          {/* Left: Brand & Title */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-sm shrink-0">
-              <GraduationCap className="w-5 h-5" />
+          {/* Top / Left: Brand & Title */}
+          <div className="flex items-center justify-between md:justify-start gap-2.5 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs shrink-0">
+                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate leading-tight">
+                  <span className="hidden sm:inline">Student Outcome &amp; Achievement Data Collection</span>
+                  <span className="inline sm:hidden">Student Outcome Portal</span>
+                </h1>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight truncate hidden xs:block sm:block">
+                  Academic Participation &amp; Progression Portal
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-slate-900 tracking-tight truncate leading-tight">
-                Student Outcome &amp; Achievement Data Collection
-              </h1>
-              <p className="text-[11px] text-slate-500 font-medium leading-tight truncate">
-                Academic Participation, Progression &amp; Achievement Verification System
-              </p>
+
+            {/* Mobile-only DB status icon */}
+            <div className="flex md:hidden items-center">
+              <div
+                title={dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border ${
+                  isOnlineDb
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-50 text-slate-700 border-slate-300'
+                }`}
+              >
+                <Database className={`w-3 h-3 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
+                <span className="hidden sm:inline">
+                  {dbStatus.isNeon ? 'Neon' : dbStatus.isMongo ? 'Mongo' : 'Local'}
+                </span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Right: All Controls in one row */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right / Bottom Controls */}
+          <div className="flex items-center justify-between md:justify-end gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
 
-            {/* Neon DB Status Badge */}
+            {/* Desktop DB Status Badge */}
             <div
               id="db-status-badge"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
                 isOnlineDb
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                   : 'bg-slate-50 text-slate-700 border-slate-300'
@@ -97,11 +122,13 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
-              <>
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 {/* Admin name badge */}
-                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span className="text-xs font-semibold text-purple-900">{adminUsername || 'Admin'}</span>
+                <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full whitespace-nowrap">
+                  <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600 shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-semibold text-purple-900 truncate max-w-[80px] sm:max-w-none">
+                    {adminUsername || 'Admin'}
+                  </span>
                 </div>
 
                 {/* Settings button */}
@@ -109,10 +136,10 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={onOpenSettings}
                   title="Admin Settings"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <Settings className="w-3.5 h-3.5" />
-                  Settings
+                  <Settings className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Settings</span>
                 </button>
 
                 {/* Sign out button */}
@@ -120,56 +147,56 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={onAdminLogout}
                   title="Sign Out"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-900 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-900 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Sign Out
+                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
-              </>
+              </div>
             ) : (
               <button
                 type="button"
                 onClick={onOpenAdminModal}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer whitespace-nowrap"
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Admin Sign In</span>
+                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
+                <span>Admin Login</span>
               </button>
             )}
 
             {/* Divider */}
-            <div className="w-px h-5 bg-slate-200 shrink-0" />
+            <div className="hidden md:block w-px h-5 bg-slate-200 shrink-0" />
 
             {/* Navigation Tabs */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 whitespace-nowrap">
+            <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">
               <button
                 type="button"
                 id="nav-tab-form"
                 onClick={() => handleTabChange('form')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                   currentTab === 'form'
-                    ? 'bg-white text-indigo-700 shadow-sm'
+                    ? 'bg-white text-indigo-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-                Data Form
+                <PlusCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <span>Data Form</span>
               </button>
               <button
                 type="button"
                 id="nav-tab-records"
                 onClick={() => handleTabChange('records')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                   currentTab === 'records'
-                    ? 'bg-white text-indigo-700 shadow-sm'
+                    ? 'bg-white text-indigo-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
-                <span>View Submissions</span>
-                {!isAdmin && <Lock className="w-3 h-3 text-slate-400" />}
+                <FileSpreadsheet className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <span>Submissions</span>
+                {!isAdmin && <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400" />}
                 {isAdmin && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
                     {submissionsCount}
                   </span>
                 )}
