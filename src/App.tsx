@@ -8,6 +8,8 @@ import {
   Database,
   ArrowRight,
   GraduationCap,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import {
   AcademicYear,
@@ -32,9 +34,15 @@ import { AchievementTypesSection } from './components/AchievementTypesSection';
 import { ExitProgressionSection } from './components/ExitProgressionSection';
 import { RecordsList } from './components/RecordsList';
 import { MongoFlaskModal } from './components/MongoFlaskModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return sessionStorage.getItem('portal_admin_auth') === 'true';
+  });
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+
   const [dbStatus, setDbStatus] = useState<{
     database: string;
     isNeon?: boolean;
@@ -162,6 +170,13 @@ export default function App() {
     fetchSubmissions();
   }, []);
 
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('portal_admin_auth');
+    sessionStorage.removeItem('portal_admin_user');
+    setIsAdmin(false);
+    setCurrentTab('form');
+  };
+
   const handleToggleCategory = (cat: AchievementCategory) => {
     setSelectedAchievementCategories((prev) => {
       if (prev.includes(cat)) {
@@ -199,29 +214,10 @@ export default function App() {
     setHigherStudiesProof(undefined);
     setSelectedAchievementCategories([]);
     setCompetitionAchievements({});
-    setPatentDetail({
-      patentTitle: '',
-      patentAppNumber: '',
-      patentStatus: 'Filed',
-      filingDate: '',
-    });
-    setStartupDetail({
-      startupName: '',
-      studentRole: '',
-      startupStatus: 'Idea Stage',
-      registrationDetails: '',
-    });
-    setFundedProjectDetail({
-      projectTitle: '',
-      fundingAgency: '',
-      fundingAmount: '',
-      projectStatus: 'Approved',
-    });
-    setSSIPProjectDetail({
-      projectTitle: '',
-      ssipStatus: 'Approved',
-      fundingAmount: '',
-    });
+    setPatentDetail({ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' });
+    setStartupDetail({ startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' });
+    setFundedProjectDetail({ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' });
+    setSSIPProjectDetail({ projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' });
     setResearchPublicationDetail({
       paperTitle: '',
       journalConferenceName: '',
@@ -229,13 +225,9 @@ export default function App() {
       publicationStatus: 'Published',
       doiOrLink: '',
     });
-    setExitProgression({
-      isExiting: false,
-      exitYear: 'Year 3',
-      pathway: 'Higher Education',
-    });
-    setSubmitSuccess(null);
+    setExitProgression({ isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
+    setSubmitSuccess(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -334,7 +326,7 @@ export default function App() {
         throw new Error(resData.error || 'Failed to submit data');
       }
 
-      setSubmitSuccess(`Student outcome submission recorded successfully in ${resData.database || 'Database'}!`);
+      setSubmitSuccess(`Student outcome submission recorded successfully in ${resData.database || 'Neon Database'}!`);
       fetchDbHealth();
       fetchSubmissions();
 
@@ -371,6 +363,9 @@ export default function App() {
         setCurrentTab={setCurrentTab}
         submissionsCount={submissions.length}
         dbStatus={dbStatus}
+        isAdmin={isAdmin}
+        onOpenAdminModal={() => setAdminModalOpen(true)}
+        onAdminLogout={handleAdminLogout}
         onOpenMongoModal={() => setMongoModalOpen(true)}
       />
 
@@ -409,46 +404,44 @@ export default function App() {
                 <div className="pt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      resetForm();
-                      setCurrentTab('records');
-                    }}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    View in Records List
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={resetForm}
-                    className="px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100/50 rounded-lg text-xs font-medium cursor-pointer"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     Submit Another Student
                   </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm();
+                        setCurrentTab('records');
+                      }}
+                      className="px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100/50 rounded-lg text-xs font-medium cursor-pointer"
+                    >
+                      View All in Records List
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Banner Alert for Error */}
+        {/* Form Error Banner */}
         {submitError && (
           <div
             id="submission-error-banner"
-            className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start space-x-3 text-xs text-rose-800 shadow-xs"
+            className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-3 shadow-xs animate-in fade-in"
           >
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold text-rose-900">Submission Notice</p>
-              <p>{submitError}</p>
-            </div>
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span className="font-medium">{submitError}</span>
           </div>
         )}
 
-        {/* Tab 1: Form View */}
         {currentTab === 'form' ? (
+          /* Tab 1: Data Collection Form */
           <form onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
-            {/* Section 1: Basic Data */}
+            {/* Section 1: Basic Student Profile */}
             <BasicInfoSection
               enrollmentNumber={enrollmentNumber}
               setEnrollmentNumber={setEnrollmentNumber}
@@ -460,51 +453,20 @@ export default function App() {
               setSemester={setSemester}
             />
 
-            {/* Section 2: Higher Studies Plan */}
+            {/* Section 2: Higher Studies Verification */}
             <HigherStudiesSection
               higherStudiesPlan={higherStudiesPlan}
               setHigherStudiesPlan={setHigherStudiesPlan}
               higherStudiesProof={higherStudiesProof}
               setHigherStudiesProof={setHigherStudiesProof}
+              isYesHigherStudies={Boolean(isYesHigherStudies)}
+              isNoHigherStudies={Boolean(isNoHigherStudies)}
             />
 
-            {/* Prompt Condition:
-                "after selecting no give submit button"
-                When "No" is chosen, show a prominent direct submit button!
-            */}
-            {isNoHigherStudies && (
-              <div
-                id="direct-no-submit-card"
-                className="p-5 bg-white rounded-xl border-2 border-indigo-200 shadow-sm space-y-3"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <Send className="w-4 h-4 text-indigo-600" />
-                      Ready to Submit Student Information
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Since you are not pursuing higher studies, you can submit your basic record now or scroll down to declare achievements/progression if applicable.
-                    </p>
-                  </div>
-                  <button
-                    type="submit"
-                    id="direct-submit-no-button"
-                    disabled={submitting}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
-                  >
-                    <Send className="w-4 h-4" />
-                    {submitting ? 'Submitting to Database...' : 'Submit Student Data'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Section 3: Type of Achievement (Sports, Hackathon, Patent, Startup, SSIP, etc.) */}
-            {/* Available to fill out for all students or after selecting yes/no */}
+            {/* Section 3: Achievements & Progression */}
             <AchievementTypesSection
               selectedCategories={selectedAchievementCategories}
-              toggleCategory={handleToggleCategory}
+              onToggleCategory={handleToggleCategory}
               competitionAchievements={competitionAchievements}
               updateCompetitionAchievement={updateCompetitionAchievement}
               patentDetail={patentDetail}
@@ -550,8 +512,8 @@ export default function App() {
               </button>
             </div>
           </form>
-        ) : (
-          /* Tab 2: Records List View */
+        ) : isAdmin ? (
+          /* Tab 2: Records List View (Admin Only) */
           <RecordsList
             submissions={submissions}
             loading={loadingSubmissions}
@@ -562,10 +524,51 @@ export default function App() {
             onDelete={handleDeleteRecord}
             dbType={dbStatus.database}
           />
+        ) : (
+          /* Admin Access Locked Screen */
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-slate-900">Admin Access Required</h2>
+              <p className="text-sm text-slate-600 max-w-md mx-auto">
+                Viewing student submissions, uploaded documents, and exporting reports is restricted to administrators and authorized faculty members.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('form')}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+              >
+                Back to Student Form
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdminModalOpen(true)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Sign In as Admin
+              </button>
+            </div>
+          </div>
         )}
       </main>
 
-      {/* MongoDB & Flask Info Dialog */}
+      {/* Admin Login Dialog */}
+      <AdminLoginModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        onLoginSuccess={() => {
+          setIsAdmin(true);
+          setCurrentTab('records');
+          fetchSubmissions();
+        }}
+      />
+
+      {/* Database Diagnostic Info Dialog */}
       <MongoFlaskModal
         isOpen={mongoModalOpen}
         onClose={() => setMongoModalOpen(false)}
