@@ -6,27 +6,37 @@ const app = express();
 app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 
-const connectionString = process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED || '';
+let poolInstance: Pool | null = null;
 
-const pool = connectionString
-  ? new Pool({
+function getPool(): Pool | null {
+  const connectionString = process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED || '';
+  if (!connectionString) {
+    return null;
+  }
+  if (!poolInstance) {
+    poolInstance = new Pool({
       connectionString,
       ssl: { rejectUnauthorized: false },
       connectionTimeoutMillis: 5000,
-    })
-  : null;
+    });
+  }
+  return poolInstance;
+}
 
 app.get('/api/health', async (req, res) => {
   let count = 0;
   let isConnected = false;
+  let errorMsg: string | undefined;
 
+  const pool = getPool();
   if (pool) {
     try {
       const result = await pool.query('SELECT COUNT(*) FROM submissions');
       count = parseInt(result.rows[0].count, 10);
       isConnected = true;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Health check DB error:', err);
+      errorMsg = err?.message;
     }
   }
 
@@ -34,13 +44,15 @@ app.get('/api/health', async (req, res) => {
     status: 'ok',
     database: isConnected ? 'Neon PostgreSQL (Active)' : 'Database Not Connected',
     isNeon: isConnected,
-    neonConfigured: Boolean(connectionString),
+    neonConfigured: Boolean(process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED),
     totalSubmissions: count,
+    error: errorMsg,
   });
 });
 
 app.get('/api/submissions', async (req, res) => {
   try {
+    const pool = getPool();
     if (!pool) {
       return res.json([]);
     }
@@ -87,6 +99,7 @@ app.post('/api/submissions', async (req, res) => {
       submittedAt: payload.submittedAt || new Date().toISOString(),
     };
 
+    const pool = getPool();
     if (pool) {
       const client = await pool.connect();
       try {
@@ -130,7 +143,6 @@ app.post('/api/submissions', async (req, res) => {
 
         const subId = subRes.rows[0]?.id;
 
-        // Normalized competition entries
         if (newRecord.competitionAchievements) {
           for (const [key, comp] of Object.entries<any>(newRecord.competitionAchievements)) {
             await client.query(
@@ -154,7 +166,6 @@ app.post('/api/submissions', async (req, res) => {
           }
         }
 
-        // Normalized patent
         if (newRecord.patentDetail?.patentTitle) {
           await client.query(
             `INSERT INTO patents (
@@ -172,7 +183,6 @@ app.post('/api/submissions', async (req, res) => {
           );
         }
 
-        // Normalized startup
         if (newRecord.startupDetail?.startupName) {
           await client.query(
             `INSERT INTO startups (
@@ -190,7 +200,6 @@ app.post('/api/submissions', async (req, res) => {
           );
         }
 
-        // Normalized research publication
         if (newRecord.researchPublicationDetail?.paperTitle) {
           await client.query(
             `INSERT INTO research_publications (
@@ -234,6 +243,7 @@ app.post('/api/submissions', async (req, res) => {
 app.delete('/api/submissions/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const pool = getPool();
     if (pool) {
       await pool.query(
         `DELETE FROM submissions WHERE id::text = $1 OR enrollment_number = $1 OR raw_data->>'id' = $1`,
@@ -249,6 +259,7 @@ app.delete('/api/submissions/:id', async (req, res) => {
 app.get('/api/export', async (req, res) => {
   try {
     let list: any[] = [];
+    const pool = getPool();
     if (pool) {
       const result = await pool.query('SELECT raw_data FROM submissions ORDER BY submitted_at DESC');
       list = result.rows.map((r: any) => r.raw_data || r);
