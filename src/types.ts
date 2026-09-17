@@ -112,6 +112,7 @@ export interface StudentSubmission {
   academicYear: AcademicYear | '';
   semester: Semester | '';
   higherStudiesPlan: HigherStudiesPlan | '';
+  higherStudiesUniversityName?: string; // For Other University or Foreign University
   higherStudiesProof?: UploadedFile; // Required when higher studies is Yes
   selectedAchievementCategories: AchievementCategory[];
   competitionAchievements: Record<string, CompetitionAchievement>;

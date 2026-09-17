@@ -1,11 +1,13 @@
 import React from 'react';
-import { Compass, CheckCircle2, FileCheck } from 'lucide-react';
+import { Compass, CheckCircle2, FileCheck, Building2, Globe } from 'lucide-react';
 import { HigherStudiesPlan, UploadedFile } from '../types';
 import { FileUploadField } from './FileUploadField';
 
 interface HigherStudiesSectionProps {
   higherStudiesPlan: HigherStudiesPlan | '';
   setHigherStudiesPlan: (val: HigherStudiesPlan) => void;
+  higherStudiesUniversityName?: string;
+  setHigherStudiesUniversityName: (val: string) => void;
   higherStudiesProof?: UploadedFile;
   setHigherStudiesProof: (file?: UploadedFile) => void;
 }
@@ -20,11 +22,16 @@ const HIGHER_STUDIES_OPTIONS: HigherStudiesPlan[] = [
 export const HigherStudiesSection: React.FC<HigherStudiesSectionProps> = ({
   higherStudiesPlan,
   setHigherStudiesPlan,
+  higherStudiesUniversityName = '',
+  setHigherStudiesUniversityName,
   higherStudiesProof,
   setHigherStudiesProof,
 }) => {
   const isNoSelected = higherStudiesPlan === 'No, I do not plan to pursue higher studies';
   const isYesSelected = higherStudiesPlan && !isNoSelected;
+  const isOtherUniversity = higherStudiesPlan === 'Yes – Other University in India';
+  const isForeignUniversity = higherStudiesPlan === 'Yes – Foreign University';
+  const requiresUniversityName = isOtherUniversity || isForeignUniversity;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-5 sm:space-y-6" id="higher-studies-section">
@@ -92,6 +99,46 @@ export const HigherStudiesSection: React.FC<HigherStudiesSectionProps> = ({
           })}
         </div>
       </div>
+
+      {/* Conditional: University Name Input for Other University or Foreign University */}
+      {requiresUniversityName && (
+        <div
+          id="higher-studies-custom-university-field"
+          className="p-4 bg-slate-50/90 border border-slate-200 rounded-xl space-y-2 animate-in fade-in duration-200"
+        >
+          <label htmlFor="higher-studies-university-name-input" className="block text-xs font-semibold text-slate-800">
+            {isOtherUniversity ? (
+              <span className="flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                Name of University / College in India <span className="text-rose-500">*</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                Name of Foreign University &amp; Country <span className="text-rose-500">*</span>
+              </span>
+            )}
+          </label>
+          <input
+            type="text"
+            id="higher-studies-university-name-input"
+            required
+            value={higherStudiesUniversityName}
+            onChange={(e) => setHigherStudiesUniversityName(e.target.value)}
+            placeholder={
+              isOtherUniversity
+                ? 'e.g. Gujarat University, IIT Bombay, Delhi University'
+                : 'e.g. Harvard University (USA), University of Toronto (Canada), Oxford (UK)'
+            }
+            className="w-full text-sm px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden transition"
+          />
+          <p className="text-[11px] text-slate-500">
+            {isOtherUniversity
+              ? 'Enter the full name of the university or institute where you plan to pursue higher education.'
+              : 'Enter the name of the overseas university and the destination country.'}
+          </p>
+        </div>
+      )}
 
       {/* Conditional: If YES is selected -> Ask for Admit Card / Letter / Confirmation */}
       {isYesSelected && (

@@ -62,6 +62,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
       'Academic Year',
       'Semester',
       'Higher Studies Plan',
+      'Higher Studies University / Institute',
       'Achievement Categories',
       'Exiting After',
       'Progression Pathway',
@@ -74,6 +75,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
       `"${sub.academicYear || ''}"`,
       `"${sub.semester || ''}"`,
       `"${sub.higherStudiesPlan || ''}"`,
+      `"${sub.higherStudiesUniversityName || 'N/A'}"`,
       `"${(sub.selectedAchievementCategories || []).join(', ')}"`,
       `"${sub.exitProgression?.isExiting ? sub.exitProgression.exitYear : 'N/A'}"`,
       `"${sub.exitProgression?.isExiting ? sub.exitProgression.pathway : 'N/A'}"`,
@@ -297,6 +299,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                     <div className="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2">
                       <span className="font-bold text-slate-900 block">Higher Studies Decision &amp; Verification</span>
                       <p className="text-slate-700">{item.higherStudiesPlan}</p>
+                      {item.higherStudiesUniversityName && (
+                        <p className="text-xs text-indigo-700 font-semibold bg-indigo-50/70 border border-indigo-100 px-2.5 py-1 rounded inline-block">
+                          Institution: {item.higherStudiesUniversityName}
+                        </p>
+                      )}
                       {item.higherStudiesProof && (
                         <div className="flex items-center gap-2 pt-1">
                           <button

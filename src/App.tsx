@@ -83,6 +83,7 @@ export default function App() {
 
   // Higher studies
   const [higherStudiesPlan, setHigherStudiesPlan] = useState<HigherStudiesPlan | ''>('');
+  const [higherStudiesUniversityName, setHigherStudiesUniversityName] = useState('');
   const [higherStudiesProof, setHigherStudiesProof] = useState<UploadedFile | undefined>(undefined);
 
   // Achievements
@@ -216,6 +217,7 @@ export default function App() {
     setAcademicYear('2024-25');
     setSemester('IV');
     setHigherStudiesPlan('');
+    setHigherStudiesUniversityName('');
     setHigherStudiesProof(undefined);
     setSelectedAchievementCategories([]);
     setCompetitionAchievements({});
@@ -262,6 +264,13 @@ export default function App() {
       return;
     }
 
+    const isOtherOrForeign =
+      higherStudiesPlan === 'Yes – Other University in India' || higherStudiesPlan === 'Yes – Foreign University';
+    if (isOtherOrForeign && !higherStudiesUniversityName.trim()) {
+      setSubmitError('Please enter the name of the University / Institution for higher studies.');
+      return;
+    }
+
     const isYesHigherStudies = higherStudiesPlan.startsWith('Yes');
     if (isYesHigherStudies && !higherStudiesProof) {
       setSubmitError(
@@ -304,6 +313,7 @@ export default function App() {
       academicYear,
       semester,
       higherStudiesPlan,
+      higherStudiesUniversityName: isOtherOrForeign ? higherStudiesUniversityName.trim() : undefined,
       higherStudiesProof,
       selectedAchievementCategories,
       competitionAchievements,
@@ -447,10 +457,10 @@ export default function App() {
             <HigherStudiesSection
               higherStudiesPlan={higherStudiesPlan}
               setHigherStudiesPlan={setHigherStudiesPlan}
+              higherStudiesUniversityName={higherStudiesUniversityName}
+              setHigherStudiesUniversityName={setHigherStudiesUniversityName}
               higherStudiesProof={higherStudiesProof}
               setHigherStudiesProof={setHigherStudiesProof}
-              isYesHigherStudies={Boolean(isYesHigherStudies)}
-              isNoHigherStudies={Boolean(isNoHigherStudies)}
             />
 
             {/* Section 3: Achievements & Progression */}
