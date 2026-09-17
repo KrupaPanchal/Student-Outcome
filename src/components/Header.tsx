@@ -97,27 +97,35 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
-              <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span className="text-xs font-semibold text-purple-900 mx-0.5">{adminUsername || 'Admin'}</span>
+              <>
+                {/* Admin name badge */}
+                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                  <span className="text-xs font-semibold text-purple-900">{adminUsername || 'Admin'}</span>
+                </div>
+
+                {/* Settings button */}
                 <button
                   type="button"
                   onClick={onOpenSettings}
                   title="Admin Settings"
-                  className="p-0.5 text-purple-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer whitespace-nowrap"
                 >
                   <Settings className="w-3.5 h-3.5" />
+                  Settings
                 </button>
+
+                {/* Sign out button */}
                 <button
                   type="button"
                   onClick={onAdminLogout}
                   title="Sign Out"
-                  className="flex items-center gap-1 ml-0.5 px-1.5 py-0.5 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-700 text-[11px] font-semibold transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-900 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <LogOut className="w-3 h-3" />
+                  <LogOut className="w-3.5 h-3.5" />
                   Sign Out
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 type="button"
