@@ -1,0 +1,6 @@
+{
+  "name": "Student Outcome & Achievement Portal",
+  "description": "Student outcome and achievement data collection web app with MongoDB backend for capturing student achievements, higher studies verification, projects, patents, and exit progression.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
