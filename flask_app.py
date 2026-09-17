@@ -125,6 +125,96 @@ def create_submission():
         "message": "Saved to local storage successfully"
     }), 201
 
+@app.route('/api/submissions/<submission_id>', methods=['GET'])
+def get_submission(submission_id):
+    if db is not None:
+        try:
+            doc = db.submissions.find_one({'_id': ObjectId(submission_id)})
+            if doc:
+                doc['_id'] = str(doc['_id'])
+                return jsonify(doc)
+            return jsonify({'error': 'Not found'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    # Local fallback
+    try:
+        with open('data/submissions.json', 'r') as f:
+            items = json.load(f)
+        doc = next((x for x in items if x.get('id') == submission_id or x.get('_id') == submission_id), None)
+        if doc:
+            return jsonify(doc)
+        return jsonify({'error': 'Not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/submissions/<submission_id>', methods=['PUT'])
+def update_submission(submission_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    data['updatedAt'] = datetime.utcnow().isoformat()
+    # Don't overwrite original submittedAt
+    data.pop('_id', None)
+
+    if db is not None:
+        try:
+            result = db.submissions.update_one(
+                {'_id': ObjectId(submission_id)},
+                {'$set': data}
+            )
+            if result.matched_count == 0:
+                return jsonify({'error': 'Record not found'}), 404
+            return jsonify({'success': True, 'message': 'Record updated successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    # Local fallback
+    try:
+        with open('data/submissions.json', 'r') as f:
+            items = json.load(f)
+        updated = False
+        for i, item in enumerate(items):
+            if item.get('id') == submission_id or item.get('_id') == submission_id:
+                items[i] = {**item, **data}
+                updated = True
+                break
+        if not updated:
+            return jsonify({'error': 'Record not found'}), 404
+        with open('data/submissions.json', 'w') as f:
+            json.dump(items, f, indent=2)
+        return jsonify({'success': True, 'message': 'Record updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/submissions/<submission_id>', methods=['DELETE'])
+def delete_submission(submission_id):
+    if db is not None:
+        try:
+            result = db.submissions.delete_one({'_id': ObjectId(submission_id)})
+            if result.deleted_count == 0:
+                return jsonify({'error': 'Record not found'}), 404
+            return jsonify({'success': True, 'message': 'Record deleted'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    # Local fallback
+    try:
+        with open('data/submissions.json', 'r') as f:
+            items = json.load(f)
+        new_items = [x for x in items if x.get('id') != submission_id and x.get('_id') != submission_id]
+        if len(new_items) == len(items):
+            return jsonify({'error': 'Record not found'}), 404
+        with open('data/submissions.json', 'w') as f:
+            json.dump(new_items, f, indent=2)
+        return jsonify({'success': True, 'message': 'Record deleted'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

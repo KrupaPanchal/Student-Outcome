@@ -115,11 +115,16 @@ export interface StudentSubmission {
   higherStudiesUniversityName?: string; // For Other University or Foreign University
   higherStudiesProof?: UploadedFile; // Required when higher studies is Yes
   selectedAchievementCategories: AchievementCategory[];
-  competitionAchievements: Record<string, CompetitionAchievement>;
+  competitionAchievements: Record<string, CompetitionAchievement[] | CompetitionAchievement>;
+  patentDetails?: PatentDetail[];
   patentDetail?: PatentDetail;
+  startupDetails?: StartupDetail[];
   startupDetail?: StartupDetail;
+  fundedProjectDetails?: FundedProjectDetail[];
   fundedProjectDetail?: FundedProjectDetail;
+  ssipProjectDetails?: SSIPProjectDetail[];
   ssipProjectDetail?: SSIPProjectDetail;
+  researchPublicationDetails?: ResearchPublicationDetail[];
   researchPublicationDetail?: ResearchPublicationDetail;
   exitProgression?: ExitProgression;
   submittedAt: string;

@@ -39,6 +39,7 @@ import { AdminSettingsModal } from './components/AdminSettingsModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     return sessionStorage.getItem('portal_admin_auth') === 'true';
   });
@@ -235,6 +236,31 @@ export default function App() {
     setExitProgression({ isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
     setSubmitSuccess(null);
+    setEditingId(null);
+  };
+
+  const handleEditRecord = (sub: StudentSubmission) => {
+    const id = sub._id || sub.id || null;
+    setEditingId(id);
+    setEnrollmentNumber(sub.enrollmentNumber || '');
+    setFullName(sub.fullName || '');
+    setAcademicYear((sub.academicYear as AcademicYear) || '2024-25');
+    setSemester((sub.semester as any) || 'IV');
+    setHigherStudiesPlan((sub.higherStudiesPlan as any) || '');
+    setHigherStudiesUniversityName(sub.higherStudiesUniversityName || '');
+    setHigherStudiesProof(sub.higherStudiesProof);
+    setSelectedAchievementCategories(sub.selectedAchievementCategories || []);
+    setCompetitionAchievements((sub.competitionAchievements as any) || {});
+    setPatentDetail(sub.patentDetail || { patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' });
+    setStartupDetail(sub.startupDetail || { startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' });
+    setFundedProjectDetail(sub.fundedProjectDetail || { projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' });
+    setSSIPProjectDetail(sub.ssipProjectDetail || { projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' });
+    setResearchPublicationDetail(sub.researchPublicationDetail || { paperTitle: '', journalConferenceName: '', publicationType: 'Journal', publicationStatus: 'Published', doiOrLink: '' });
+    setExitProgression(sub.exitProgression || { isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setCurrentTab('form');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -330,18 +356,34 @@ export default function App() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      let res: Response;
+      if (editingId) {
+        // UPDATE existing record
+        res = await fetch(`/api/submissions/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // CREATE new record
+        res = await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       const resData = await res.json();
       if (!res.ok) {
         throw new Error(resData.error || 'Failed to submit data');
       }
 
-      setSubmitSuccess(`Student outcome submission recorded successfully in ${resData.database || 'Neon Database'}!`);
+      setSubmitSuccess(
+        editingId
+          ? `Record updated successfully!`
+          : `Student outcome submission recorded successfully in ${resData.database || 'Database'}!`
+      );
+      setEditingId(null);
       fetchDbHealth();
       fetchSubmissions();
 
@@ -440,6 +482,22 @@ export default function App() {
 
         {currentTab === 'form' ? (
           /* Tab 1: Data Collection Form */
+          <>
+          {editingId && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-700 font-bold text-xs">✏️ Editing Record</span>
+                <span className="text-xs text-amber-600">You are editing an existing submission. Submit to save changes.</span>
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-3 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg cursor-pointer"
+              >
+                Cancel Edit
+              </button>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
             {/* Section 1: Basic Student Profile */}
             <BasicInfoSection
@@ -506,13 +564,16 @@ export default function App() {
                 type="submit"
                 id="main-submit-button"
                 disabled={submitting}
-                className="w-full sm:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className={`w-full sm:w-auto px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                  editingId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
               >
                 <Send className="w-4 h-4" />
-                {submitting ? 'Saving to Database...' : 'Submit Student Outcome Record'}
+                {submitting ? 'Saving...' : editingId ? 'Update Record' : 'Submit Student Outcome Record'}
               </button>
             </div>
           </form>
+          </>
         ) : isAdmin ? (
           /* Tab 2: Records List View (Admin Only) */
           <RecordsList
@@ -523,6 +584,7 @@ export default function App() {
               fetchSubmissions();
             }}
             onDelete={handleDeleteRecord}
+            onEdit={handleEditRecord}
             dbType={dbStatus.database}
           />
         ) : (

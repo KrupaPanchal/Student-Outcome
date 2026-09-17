@@ -16,6 +16,8 @@ import {
   Hash,
   Eye,
   RefreshCw,
+  Pencil,
+  Clock,
 } from 'lucide-react';
 import { StudentSubmission, AcademicYear, Semester, UploadedFile, CompetitionAchievement } from '../types';
 
@@ -24,6 +26,7 @@ interface RecordsListProps {
   loading: boolean;
   onRefresh: () => void;
   onDelete: (id: string) => void;
+  onEdit: (sub: StudentSubmission) => void;
   dbType: string;
 }
 
@@ -32,6 +35,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
   loading,
   onRefresh,
   onDelete,
+  onEdit,
   dbType,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -240,15 +244,33 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                     </p>
                   </div>
 
-                  <div className="flex items-center space-x-3 self-end sm:self-center">
+                  <div className="flex items-center space-x-2 self-end sm:self-center">
                     <div className="text-right hidden md:block">
-                      <p className="text-[11px] text-slate-400">
-                        {new Date(item.submittedAt).toLocaleDateString()}
+                      <p className="text-[11px] text-slate-400 flex items-center gap-1 justify-end">
+                        <Clock className="w-3 h-3" />
+                        {new Date(item.submittedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                       </p>
+                      {(item as any).updatedAt && (
+                        <p className="text-[10px] text-amber-600 font-medium">
+                          Updated: {new Date((item as any).updatedAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                        </p>
+                      )}
                       <p className="text-[11px] text-indigo-600 font-medium">
                         {(item.selectedAchievementCategories || []).length} Achievements
                       </p>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(item);
+                      }}
+                      className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                      title="Edit record"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
 
                     <button
                       type="button"
@@ -275,8 +297,21 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                 {/* Expanded Details */}
                 {isExpanded && (
                   <div className="p-5 border-t border-slate-100 bg-slate-50/50 space-y-5 text-xs">
-                    {/* Basic Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-lg border border-slate-200">
+                      {/* Timestamps */}
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
+                          <Clock className="w-3 h-3" />
+                          Submitted: {new Date(item.submittedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
+                        </span>
+                        {(item as any).updatedAt && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+                            <Pencil className="w-3 h-3" />
+                            Last Updated: {new Date((item as any).updatedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
+                          </span>
+                        )}
+                      </div>
+                      {/* Basic Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-lg border border-slate-200">
                       <div>
                         <span className="text-slate-400 block">Enrollment No</span>
                         <span className="font-mono font-bold text-slate-800">{item.enrollmentNumber}</span>
