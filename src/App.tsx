@@ -457,6 +457,7 @@ export default function App() {
             <AchievementTypesSection
               selectedCategories={selectedAchievementCategories}
               onToggleCategory={handleToggleCategory}
+              toggleCategory={handleToggleCategory}
               competitionAchievements={competitionAchievements}
               updateCompetitionAchievement={updateCompetitionAchievement}
               patentDetail={patentDetail}

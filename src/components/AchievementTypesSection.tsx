@@ -14,7 +14,8 @@ import { FileUploadField } from './FileUploadField';
 
 interface AchievementTypesSectionProps {
   selectedCategories: AchievementCategory[];
-  toggleCategory: (cat: AchievementCategory) => void;
+  toggleCategory?: (cat: AchievementCategory) => void;
+  onToggleCategory?: (cat: AchievementCategory) => void;
   competitionAchievements: Record<string, CompetitionAchievement>;
   updateCompetitionAchievement: (cat: string, updates: Partial<CompetitionAchievement>) => void;
   patentDetail: PatentDetail;
@@ -53,8 +54,9 @@ const STANDARD_EVENT_CATEGORIES = [
 ];
 
 export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = ({
-  selectedCategories,
+  selectedCategories = [],
   toggleCategory,
+  onToggleCategory,
   competitionAchievements,
   updateCompetitionAchievement,
   patentDetail,
@@ -68,6 +70,14 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
   researchPublicationDetail,
   setResearchPublicationDetail,
 }) => {
+  const handleToggle = (cat: AchievementCategory) => {
+    if (onToggleCategory) {
+      onToggleCategory(cat);
+    } else if (toggleCategory) {
+      toggleCategory(cat);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-6" id="achievement-types-section">
       <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
@@ -93,7 +103,6 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
             return (
               <label
                 key={id}
-                htmlFor={`checkbox-${id}`}
                 className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
                   isChecked
                     ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600/30 text-indigo-950 font-semibold shadow-xs'
@@ -102,10 +111,9 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
               >
                 <input
                   type="checkbox"
-                  id={`checkbox-${id}`}
                   checked={isChecked}
-                  onChange={() => toggleCategory(id)}
-                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  onChange={() => handleToggle(id)}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
                 />
                 <Icon className={`w-4 h-4 shrink-0 ${isChecked ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <span className="text-xs sm:text-sm select-none">{label}</span>
