@@ -128,21 +128,9 @@ export const RecordsList: React.FC<RecordsListProps> = ({
     setExportingType('excel');
 
     try {
-      const baseUrl = window.location.origin;
       const data = filtered.map((sub) => {
         const attachedDocs = getSubmissionDocuments(sub);
-        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
         const docNames = attachedDocs.map((d) => `${d.label}: ${d.file.name}`).join(' | ') || 'None';
-        const docLinks = attachedDocs
-          .map((d) => {
-            const link = d.file.dataUrl && d.file.dataUrl.startsWith('http')
-              ? d.file.dataUrl
-              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
-              ? `${baseUrl}${d.file.dataUrl}`
-              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`;
-            return `${d.label}: ${link}`;
-          })
-          .join('\n') || 'None';
 
         return {
           'Enrollment Number': sub.enrollmentNumber || '',
@@ -164,7 +152,6 @@ export const RecordsList: React.FC<RecordsListProps> = ({
               : sub.exitProgression.otherDetails || ''
             : 'N/A',
           'Attached Documents': docNames,
-          'Document Links': docLinks,
           'Submitted At': sub.submittedAt || '',
         };
       });
@@ -182,8 +169,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
         { wch: 14 }, // Exiting After
         { wch: 22 }, // Pathway
         { wch: 30 }, // Progression Details
-        { wch: 35 }, // Attached Documents
-        { wch: 60 }, // Document Links
+        { wch: 40 }, // Attached Documents
         { wch: 22 }, // Submitted At
       ];
 
@@ -214,7 +200,6 @@ export const RecordsList: React.FC<RecordsListProps> = ({
     setExportingType('csv');
 
     try {
-      const baseUrl = window.location.origin;
       const headers = [
         'Enrollment Number',
         'Full Name',
@@ -226,24 +211,12 @@ export const RecordsList: React.FC<RecordsListProps> = ({
         'Exiting After',
         'Progression Pathway',
         'Attached Documents',
-        'Document Links',
         'Submitted At',
       ];
 
       const rows = filtered.map((sub) => {
         const attachedDocs = getSubmissionDocuments(sub);
-        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
         const docNames = attachedDocs.map((d) => `${d.label}: ${d.file.name}`).join(' | ') || 'None';
-        const docLinks = attachedDocs
-          .map((d) => {
-            const link = d.file.dataUrl && d.file.dataUrl.startsWith('http')
-              ? d.file.dataUrl
-              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
-              ? `${baseUrl}${d.file.dataUrl}`
-              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`;
-            return `${d.label}: ${link}`;
-          })
-          .join(' | ') || 'None';
 
         return [
           `"${sub.enrollmentNumber || ''}"`,
@@ -256,7 +229,6 @@ export const RecordsList: React.FC<RecordsListProps> = ({
           `"${sub.exitProgression?.isExiting ? sub.exitProgression.exitYear : 'N/A'}"`,
           `"${sub.exitProgression?.isExiting ? sub.exitProgression.pathway : 'N/A'}"`,
           `"${docNames}"`,
-          `"${docLinks}"`,
           `"${sub.submittedAt || ''}"`,
         ];
       });
@@ -284,25 +256,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
     setExportingType('json');
 
     try {
-      const baseUrl = window.location.origin;
-      const exportData = filtered.map((sub) => {
-        const attachedDocs = getSubmissionDocuments(sub);
-        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
-        return {
-          ...sub,
-          documentLinks: attachedDocs.map((d) => ({
-            label: d.label,
-            fileName: d.file.name,
-            link: d.file.dataUrl && d.file.dataUrl.startsWith('http')
-              ? d.file.dataUrl
-              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
-              ? `${baseUrl}${d.file.dataUrl}`
-              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`,
-          })),
-        };
-      });
-
-      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataStr = JSON.stringify(filtered, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' });
       const fileName = `student_outcomes_${Date.now()}.json`;
       const fileUrl = URL.createObjectURL(blob);
