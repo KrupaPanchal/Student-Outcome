@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Lock,
   X,
+  RefreshCw,
 } from 'lucide-react';
 import {
   AcademicYear,
@@ -76,16 +77,27 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [activeErrorFieldId, setActiveErrorFieldId] = useState<string | null>(null);
 
-  // Auto-dismiss success notification after 6 seconds
+  // Auto-dismiss notifications
   useEffect(() => {
     if (submitSuccess) {
       const timer = setTimeout(() => {
         setSubmitSuccess(null);
-      }, 6000);
+      }, 7000);
       return () => clearTimeout(timer);
     }
   }, [submitSuccess]);
+
+  useEffect(() => {
+    if (submitError) {
+      const timer = setTimeout(() => {
+        setSubmitError(null);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitError]);
 
 
   // Form State
@@ -367,6 +379,8 @@ export default function App() {
     }]);
     setExitProgression({ isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
+    setFieldErrors({});
+    setActiveErrorFieldId(null);
     if (clearSuccess) {
       setSubmitSuccess(null);
     }
@@ -450,9 +464,31 @@ export default function App() {
 
     setExitProgression(sub.exitProgression || { isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
+    setFieldErrors({});
+    setActiveErrorFieldId(null);
     setSubmitSuccess(null);
     setCurrentTab('form');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToElement = (elementId: string) => {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = el.querySelector('input:not([type="hidden"]), select, textarea') as HTMLElement | null;
+      if (input) {
+        input.focus();
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const triggerFieldError = (fieldId: string, message: string) => {
+    setFieldErrors({ [fieldId]: message });
+    setActiveErrorFieldId(fieldId);
+    setSubmitError(message);
+    scrollToElement(fieldId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -460,72 +496,144 @@ export default function App() {
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    // Validation
+    // Section 1: Basic Information Validation
     if (!enrollmentNumber.trim()) {
-      setSubmitError('Please enter your Enrollment Number.');
+      triggerFieldError('enrollment-number-input', 'Please enter your Enrollment Number.');
       return;
     }
     if (!fullName.trim()) {
-      setSubmitError('Please enter your Full Name as per certificate.');
+      triggerFieldError('fullname-input', 'Please enter your Full Name as per certificate.');
       return;
     }
     if (!academicYear) {
-      setSubmitError('Please select the Academic Year.');
+      triggerFieldError('academic-year-container', 'Please select the Academic Year.');
       return;
     }
     if (!semester) {
-      setSubmitError('Please select your Semester.');
+      triggerFieldError('semester-container', 'Please select your Semester.');
       return;
     }
+
+    // Section 2: Higher Studies Validation
     if (!higherStudiesPlan) {
-      setSubmitError('Please indicate whether you plan to pursue higher studies.');
+      triggerFieldError('higher-studies-section', 'Please indicate whether you plan to pursue higher studies in Section 2.');
       return;
     }
 
     const isOtherOrForeign =
       higherStudiesPlan === 'Yes – Other University in India' || higherStudiesPlan === 'Yes – Foreign University';
     if (isOtherOrForeign && !higherStudiesUniversityName.trim()) {
-      setSubmitError('Please enter the name of the University / Institution for higher studies.');
+      triggerFieldError('higher-studies-university-name-input', 'Please enter the name of the University / Institution for higher studies.');
       return;
     }
 
     const isYesHigherStudies = higherStudiesPlan.startsWith('Yes');
     if (isYesHigherStudies && !higherStudiesProof) {
-      setSubmitError(
+      triggerFieldError(
+        'higher-studies-proof-container',
         'Supporting Admit Card / Admission Letter / Confirmation document is required when choosing higher studies.'
       );
       return;
     }
 
-    // Check SSIP Project requirement if selected
-    if (selectedAchievementCategories.includes('SSIP Project')) {
-      const firstSSIP = ssipProjectDetails[0];
-      if (!firstSSIP || !firstSSIP.projectTitle.trim()) {
-        setSubmitError('Please enter the SSIP Project Title.');
-        return;
-      }
-      if (!firstSSIP.proofFile) {
-        setSubmitError('SSIP Proof document upload is required for SSIP Projects.');
-        return;
+    // Section 3: Achievements Validation
+    for (const cat of selectedAchievementCategories) {
+      if (
+        [
+          'Sports Competition',
+          'Hackathon',
+          'Coding Competition',
+          'Cultural Competition',
+          'Workshop / Technical Event',
+          'Other Achievement',
+        ].includes(cat)
+      ) {
+        const raw = competitionAchievements[cat];
+        const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        for (let i = 0; i < list.length; i++) {
+          const entry = list[i];
+          if (!entry.eventName?.trim()) {
+            triggerFieldError('achievement-types-section', `Please enter the Name of Event for ${cat}${list.length > 1 ? ` Entry #${i + 1}` : ''}.`);
+            return;
+          }
+          if (!entry.organizedBy?.trim()) {
+            triggerFieldError('achievement-types-section', `Please enter the Organizing Body for ${cat}${list.length > 1 ? ` Entry #${i + 1}` : ''}.`);
+            return;
+          }
+          if (!entry.dateOfAchievement) {
+            triggerFieldError('achievement-types-section', `Please select the Date of Achievement for ${cat}${list.length > 1 ? ` Entry #${i + 1}` : ''}.`);
+            return;
+          }
+        }
       }
     }
 
-    // Check Exit progression requirements if checked
+    if (selectedAchievementCategories.includes('Patent')) {
+      for (let i = 0; i < patentDetails.length; i++) {
+        if (!patentDetails[i]?.patentTitle?.trim()) {
+          triggerFieldError('form-section-patent', `Please enter the Patent Title for Patent #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    if (selectedAchievementCategories.includes('Startup')) {
+      for (let i = 0; i < startupDetails.length; i++) {
+        if (!startupDetails[i]?.startupName?.trim()) {
+          triggerFieldError('form-section-startup', `Please enter the Startup Name for Startup #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    if (selectedAchievementCategories.includes('Funded Project')) {
+      for (let i = 0; i < fundedProjectDetails.length; i++) {
+        if (!fundedProjectDetails[i]?.projectTitle?.trim()) {
+          triggerFieldError('form-section-funded-project', `Please enter the Project Title for Funded Project #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    if (selectedAchievementCategories.includes('SSIP Project')) {
+      for (let i = 0; i < ssipProjectDetails.length; i++) {
+        const sp = ssipProjectDetails[i];
+        if (!sp?.projectTitle?.trim()) {
+          triggerFieldError('form-section-ssip-project', `Please enter the SSIP Project Title for SSIP Project #${i + 1}.`);
+          return;
+        }
+        if (!sp.proofFile) {
+          triggerFieldError('form-section-ssip-project', `SSIP Proof document upload is required for SSIP Project #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    if (selectedAchievementCategories.includes('Research Publication')) {
+      for (let i = 0; i < researchPublicationDetails.length; i++) {
+        if (!researchPublicationDetails[i]?.paperTitle?.trim()) {
+          triggerFieldError('form-section-research-pub', `Please enter the Paper Title for Research Publication #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    // Section 4: Exit progression validation
     if (exitProgression.isExiting) {
       if (exitProgression.pathway === 'Higher Education' && !exitProgression.admissionDocument) {
-        setSubmitError('Admission Letter / Confirmation document is required for Higher Education exit.');
+        triggerFieldError('exit-progression-section', 'Admission Letter / Confirmation document is required for Higher Education exit.');
         return;
       }
       if (exitProgression.pathway === 'Placement / Employment' && !exitProgression.employmentDocument) {
-        setSubmitError('Offer Letter / Employment Letter is required for Placement / Employment exit.');
+        triggerFieldError('exit-progression-section', 'Offer Letter / Employment Letter is required for Placement / Employment exit.');
         return;
       }
       if (exitProgression.pathway === 'Entrepreneurship' && !exitProgression.gstOrOfficialDocument) {
-        setSubmitError('GST Registration / Official Proof is required for Entrepreneurship exit.');
+        triggerFieldError('exit-progression-section', 'GST Registration / Official Proof is required for Entrepreneurship exit.');
         return;
       }
       if (exitProgression.pathway === 'Other' && !exitProgression.otherDetails?.trim()) {
-        setSubmitError('Please specify the reason / details for your exit progression.');
+        triggerFieldError('exit-progression-section', 'Please specify the reason / details for your exit progression.');
         return;
       }
     }
@@ -635,6 +743,49 @@ export default function App() {
         </div>
       )}
 
+      {/* Floating Error Toast (Always Visible on Laptop & Mobile) */}
+      {submitError && (
+        <div
+          id="global-floating-error-toast"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-start gap-3 p-3.5 sm:p-4 bg-slate-900 text-white rounded-2xl shadow-2xl border border-rose-500/80 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 max-w-lg w-[92vw] sm:w-auto"
+        >
+          <div className="p-2 bg-rose-500/20 text-rose-400 rounded-xl shrink-0 mt-0.5 border border-rose-500/30">
+            <AlertCircle className="w-5 h-5 text-rose-400" />
+          </div>
+          <div className="flex-1 min-w-0 pr-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">
+                Required Field Missing
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-slate-100 mt-1 leading-snug">
+              {submitError}
+            </p>
+            {activeErrorFieldId && (
+              <button
+                type="button"
+                onClick={() => scrollToElement(activeErrorFieldId)}
+                className="mt-2 text-xs font-bold text-indigo-300 hover:text-white flex items-center gap-1 hover:underline cursor-pointer"
+              >
+                <span>Jump to this field</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSubmitError(null);
+              setActiveErrorFieldId(null);
+            }}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0"
+            title="Dismiss error"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top Navigation & Brand Header */}
       <Header
         currentTab={currentTab}
@@ -651,8 +802,6 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12">
-
-
         {/* Minimal Clean Success Notification */}
         {submitSuccess && (
           <div
@@ -703,27 +852,92 @@ export default function App() {
               </button>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
+          <form noValidate onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
             {/* Section 1: Basic Student Profile */}
             <BasicInfoSection
               enrollmentNumber={enrollmentNumber}
-              setEnrollmentNumber={setEnrollmentNumber}
+              setEnrollmentNumber={(val) => {
+                setEnrollmentNumber(val);
+                if (fieldErrors['enrollment-number-input']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['enrollment-number-input'];
+                    return next;
+                  });
+                }
+              }}
               fullName={fullName}
-              setFullName={setFullName}
+              setFullName={(val) => {
+                setFullName(val);
+                if (fieldErrors['fullname-input']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['fullname-input'];
+                    return next;
+                  });
+                }
+              }}
               academicYear={academicYear}
-              setAcademicYear={setAcademicYear}
+              setAcademicYear={(val) => {
+                setAcademicYear(val);
+                if (fieldErrors['academic-year-container']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['academic-year-container'];
+                    return next;
+                  });
+                }
+              }}
               semester={semester}
-              setSemester={setSemester}
+              setSemester={(val) => {
+                setSemester(val);
+                if (fieldErrors['semester-container']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['semester-container'];
+                    return next;
+                  });
+                }
+              }}
+              errors={fieldErrors}
             />
 
             {/* Section 2: Higher Studies Verification */}
             <HigherStudiesSection
               higherStudiesPlan={higherStudiesPlan}
-              setHigherStudiesPlan={setHigherStudiesPlan}
+              setHigherStudiesPlan={(val) => {
+                setHigherStudiesPlan(val);
+                if (fieldErrors['higher-studies-section']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['higher-studies-section'];
+                    return next;
+                  });
+                }
+              }}
               higherStudiesUniversityName={higherStudiesUniversityName}
-              setHigherStudiesUniversityName={setHigherStudiesUniversityName}
+              setHigherStudiesUniversityName={(val) => {
+                setHigherStudiesUniversityName(val);
+                if (fieldErrors['higher-studies-university-name-input']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['higher-studies-university-name-input'];
+                    return next;
+                  });
+                }
+              }}
               higherStudiesProof={higherStudiesProof}
-              setHigherStudiesProof={setHigherStudiesProof}
+              setHigherStudiesProof={(val) => {
+                setHigherStudiesProof(val);
+                if (fieldErrors['higher-studies-proof-container']) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next['higher-studies-proof-container'];
+                    return next;
+                  });
+                }
+              }}
+              errors={fieldErrors}
             />
 
             {/* Section 3: Achievements & Progression */}
@@ -766,28 +980,46 @@ export default function App() {
             {/* Main Form Action Bar */}
             <div
               id="form-action-bar"
-              className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-4"
+              className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col gap-3"
             >
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                <span>Reset Form</span>
-              </button>
+              {submitError && (
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2.5 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span className="font-semibold">{submitError}</span>
+                </div>
+              )}
 
-              <button
-                type="submit"
-                id="main-submit-button"
-                disabled={submitting}
-                className={`w-full sm:w-auto px-6 sm:px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
-                  editingId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
-              >
-                <Send className="w-4 h-4" />
-                <span>{submitting ? 'Saving...' : editingId ? 'Update Record' : 'Submit Student Outcome Record'}</span>
-              </button>
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Reset Form</span>
+                </button>
+
+                <button
+                  type="submit"
+                  id="main-submit-button"
+                  disabled={submitting}
+                  className={`w-full sm:w-auto px-6 sm:px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                    editingId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  {submitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving Record...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>{editingId ? 'Update Record' : 'Submit Student Outcome Record'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
           </>

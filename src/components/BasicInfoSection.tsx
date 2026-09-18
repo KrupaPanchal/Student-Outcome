@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Hash, Calendar, Layers } from 'lucide-react';
+import { User, Hash, Calendar, Layers, AlertCircle } from 'lucide-react';
 import { AcademicYear, Semester } from '../types';
 
 interface BasicInfoSectionProps {
@@ -11,6 +11,7 @@ interface BasicInfoSectionProps {
   setAcademicYear: (val: AcademicYear) => void;
   semester: Semester | '';
   setSemester: (val: Semester) => void;
+  errors?: Record<string, string>;
 }
 
 const ACADEMIC_YEARS: AcademicYear[] = ['2023-24', '2024-25', '2025-26', '2026-27'];
@@ -25,7 +26,13 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   setAcademicYear,
   semester,
   setSemester,
+  errors = {},
 }) => {
+  const enrollmentError = errors['enrollment-number-input'];
+  const fullNameError = errors['fullname-input'];
+  const academicYearError = errors['academic-year-container'];
+  const semesterError = errors['semester-container'];
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-5 sm:space-y-6" id="basic-info-section">
       <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
@@ -45,7 +52,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             Enrollment Number <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${enrollmentError ? 'text-rose-500' : 'text-slate-400'}`}>
               <Hash className="w-4 h-4" />
             </div>
             <input
@@ -54,11 +61,21 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               value={enrollmentNumber}
               onChange={(e) => setEnrollmentNumber(e.target.value)}
               placeholder="e.g. 21012011001"
-              required
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+              className={`w-full pl-10 pr-3.5 py-2.5 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden transition-all font-mono ${
+                enrollmentError
+                  ? 'bg-rose-50/50 border-2 border-rose-500 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20'
+                  : 'bg-slate-50/50 border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+              }`}
             />
           </div>
-          <p className="text-xs text-slate-400">Unique university student ID or registration number.</p>
+          {enrollmentError ? (
+            <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              {enrollmentError}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400">Unique university student ID or registration number.</p>
+          )}
         </div>
 
         {/* Full Name as per certificate */}
@@ -67,7 +84,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             Full Name as per Certificate <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${fullNameError ? 'text-rose-500' : 'text-slate-400'}`}>
               <User className="w-4 h-4" />
             </div>
             <input
@@ -76,16 +93,26 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Shah Priya Rajeshbhai"
-              required
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all capitalize"
+              className={`w-full pl-10 pr-3.5 py-2.5 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden transition-all capitalize ${
+                fullNameError
+                  ? 'bg-rose-50/50 border-2 border-rose-500 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20'
+                  : 'bg-slate-50/50 border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+              }`}
             />
           </div>
-          <p className="text-xs text-slate-400">Must exactly match your university certificates &amp; records.</p>
+          {fullNameError ? (
+            <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              {fullNameError}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400">Must exactly match your university certificates &amp; records.</p>
+          )}
         </div>
       </div>
 
       {/* Academic Year - Radio Buttons */}
-      <div className="space-y-2 pt-1" id="academic-year-container">
+      <div className={`space-y-2 pt-1 p-2 rounded-xl transition-all ${academicYearError ? 'bg-rose-50/40 border border-rose-300' : ''}`} id="academic-year-container">
         <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
           <Calendar className="w-4 h-4 text-indigo-600" />
           Participated in the Academic Year <span className="text-rose-500">*</span>
@@ -100,6 +127,8 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 className={`relative flex items-center justify-between p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-600/20 text-indigo-900 font-semibold shadow-xs'
+                    : academicYearError
+                    ? 'border-rose-300 bg-white hover:bg-rose-50/30 text-slate-700 font-medium'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
@@ -117,10 +146,16 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             );
           })}
         </div>
+        {academicYearError && (
+          <p className="text-xs text-rose-600 font-medium flex items-center gap-1 pt-1">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            {academicYearError}
+          </p>
+        )}
       </div>
 
       {/* Semester - Radio Buttons */}
-      <div className="space-y-2 pt-1" id="semester-container">
+      <div className={`space-y-2 pt-1 p-2 rounded-xl transition-all ${semesterError ? 'bg-rose-50/40 border border-rose-300' : ''}`} id="semester-container">
         <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
           <Layers className="w-4 h-4 text-indigo-600" />
           Semester based on the academic year <span className="text-rose-500">*</span>
@@ -135,6 +170,8 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 className={`relative flex items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border cursor-pointer transition-all text-center ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-600/20 text-indigo-900 font-bold shadow-xs'
+                    : semesterError
+                    ? 'border-rose-300 bg-white hover:bg-rose-50/30 text-slate-700 font-medium'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
@@ -152,7 +189,14 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             );
           })}
         </div>
+        {semesterError && (
+          <p className="text-xs text-rose-600 font-medium flex items-center gap-1 pt-1">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            {semesterError}
+          </p>
+        )}
       </div>
     </div>
   );
 };
+
