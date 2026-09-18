@@ -84,7 +84,7 @@ export interface ResearchPublicationDetail {
   proofFile?: UploadedFile;
 }
 
-export type ExitPathway = 'None' | 'Higher Education' | 'Placement / Employment' | 'Entrepreneurship';
+export type ExitPathway = 'None' | 'Higher Education' | 'Placement / Employment' | 'Entrepreneurship' | 'Other';
 
 export interface ExitProgression {
   isExiting: boolean;
@@ -102,6 +102,8 @@ export interface ExitProgression {
   gstNumber?: string;
   companyOrVentureName?: string;
   gstOrOfficialDocument?: UploadedFile;
+  // Other details
+  otherDetails?: string;
 }
 
 export interface StudentSubmission {

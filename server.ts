@@ -70,6 +70,8 @@ async function connectToPg(uriToTest: string): Promise<{ success: boolean; error
 
     const count = parseInt(countRes.rows[0].count, 10);
     console.log(`[Neon DB] Connected successfully to Neon PostgreSQL. Found ${count} submissions.`);
+    // Prime in-memory cache asynchronously
+    loadSubmissionsCache(true).catch(() => {});
     return { success: true, count };
   } catch (err: any) {
     pgConnected = false;
@@ -81,6 +83,84 @@ async function connectToPg(uriToTest: string): Promise<{ success: boolean; error
 
 if (activePgUri) {
   connectToPg(activePgUri);
+}
+
+// In-Memory Submissions Cache for high-performance database querying
+let memorySubmissionsCache: any[] | null = null;
+try {
+  memorySubmissionsCache = getLocalSubmissions();
+} catch {}
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 1000; // Auto re-sync every 60s
+let isCacheLoading = false;
+
+async function loadSubmissionsCache(force = false): Promise<any[]> {
+  const now = Date.now();
+  if (!force && memorySubmissionsCache && (now - cacheTimestamp < CACHE_TTL_MS)) {
+    return memorySubmissionsCache;
+  }
+
+  if (isCacheLoading && memorySubmissionsCache) {
+    return memorySubmissionsCache;
+  }
+
+  isCacheLoading = true;
+  try {
+    if (pgConnected && pgPool) {
+      const result = await pgPool.query('SELECT raw_data FROM submissions ORDER BY submitted_at DESC');
+      const docs = result.rows.map((row: any) => {
+        const item = row.raw_data || row;
+        if (!item.id && !item._id && row.id) {
+          item.id = String(row.id);
+        }
+        return item;
+      });
+      memorySubmissionsCache = docs;
+      cacheTimestamp = Date.now();
+      console.log(`[Cache] Preloaded ${docs.length} submissions from Neon PostgreSQL.`);
+      return docs;
+    }
+    const localList = getLocalSubmissions();
+    memorySubmissionsCache = localList;
+    cacheTimestamp = Date.now();
+    return localList;
+  } catch (err) {
+    console.error('[Cache] Error loading submissions cache:', err);
+    if (memorySubmissionsCache) return memorySubmissionsCache;
+    return getLocalSubmissions();
+  } finally {
+    isCacheLoading = false;
+  }
+}
+
+// Convert large base64 dataUrls into fast direct document download URLs for list view
+function sanitizeSubmissionForList(sub: any): any {
+  if (!sub || typeof sub !== 'object') return sub;
+  const subId = sub.id || sub._id || sub.enrollmentNumber;
+
+  function processObj(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(processObj);
+
+    // If it's an uploaded file object
+    if (typeof obj.name === 'string' && typeof obj.dataUrl === 'string') {
+      const isBase64 = obj.dataUrl.startsWith('data:');
+      return {
+        ...obj,
+        dataUrl: isBase64
+          ? `/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(obj.name)}`
+          : obj.dataUrl,
+      };
+    }
+
+    const copy: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      copy[k] = processObj(v);
+    }
+    return copy;
+  }
+
+  return processObj(sub);
 }
 
 // Helper to get local records
@@ -109,6 +189,9 @@ function saveLocalSubmissions(data: any[]): void {
   fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+// Preload cache on initialization
+loadSubmissionsCache().catch(() => {});
+
 // API Routes
 app.get('/api/health', async (req, res) => {
   let count = 0;
@@ -120,17 +203,17 @@ app.get('/api/health', async (req, res) => {
       count = parseInt(result.rows[0].count, 10);
       dbName = 'Neon PostgreSQL (Active)';
     } catch {
-      count = getLocalSubmissions().length;
+      count = (memorySubmissionsCache || getLocalSubmissions()).length;
     }
   } else if (mongoDbConnected && mongoClient) {
     try {
       count = await mongoClient.db().collection('submissions').countDocuments();
       dbName = 'MongoDB Active';
     } catch {
-      count = getLocalSubmissions().length;
+      count = (memorySubmissionsCache || getLocalSubmissions()).length;
     }
   } else {
-    count = getLocalSubmissions().length;
+    count = (memorySubmissionsCache || getLocalSubmissions()).length;
   }
 
   res.json({
@@ -155,10 +238,10 @@ app.post('/api/reconnect-db', async (req, res) => {
       const resCount = await pgPool.query('SELECT COUNT(*) FROM submissions');
       count = parseInt(resCount.rows[0].count, 10);
     } catch {
-      count = getLocalSubmissions().length;
+      count = (memorySubmissionsCache || getLocalSubmissions()).length;
     }
   } else {
-    count = getLocalSubmissions().length;
+    count = (memorySubmissionsCache || getLocalSubmissions()).length;
   }
 
   res.json({
@@ -172,54 +255,106 @@ app.post('/api/reconnect-db', async (req, res) => {
 
 app.get('/api/submissions', async (req, res) => {
   try {
-    const { academicYear, semester, search } = req.query;
+    const { academicYear, semester, search, full } = req.query;
 
-    if (pgConnected && pgPool) {
-      let query = 'SELECT raw_data FROM submissions WHERE 1=1';
-      const params: any[] = [];
+    const list = await loadSubmissionsCache();
+    let filtered = [...list];
 
-      if (academicYear) {
-        params.push(academicYear);
-        query += ` AND academic_year = $${params.length}`;
-      }
-      if (semester) {
-        params.push(semester);
-        query += ` AND semester = $${params.length}`;
-      }
-      if (search) {
-        params.push(`%${search}%`);
-        query += ` AND (enrollment_number ILIKE $${params.length} OR full_name ILIKE $${params.length})`;
-      }
-
-      query += ' ORDER BY submitted_at DESC';
-
-      const result = await pgPool.query(query, params);
-      const docs = result.rows.map((row: any) => row.raw_data || row);
-      return res.json(docs);
-    }
-
-    // Local JSON DB fallback
-    let list = getLocalSubmissions();
     if (academicYear) {
-      list = list.filter((item) => item.academicYear === academicYear);
+      filtered = filtered.filter((item) => String(item.academicYear) === String(academicYear));
     }
     if (semester) {
-      list = list.filter((item) => item.semester === semester);
+      filtered = filtered.filter((item) => String(item.semester) === String(semester));
     }
     if (search) {
       const s = String(search).toLowerCase();
-      list = list.filter(
+      filtered = filtered.filter(
         (item) =>
           item.enrollmentNumber?.toLowerCase().includes(s) ||
           item.fullName?.toLowerCase().includes(s)
       );
     }
-    list.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 
-    res.json(list);
+    filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+
+    // Unless full payload is explicitly asked, strip heavy base64 strings to direct file URLs
+    if (full !== 'true') {
+      filtered = filtered.map(sanitizeSubmissionForList);
+    }
+
+    res.json(filtered);
   } catch (err: any) {
     console.error('Error fetching submissions:', err);
     res.status(500).json({ error: 'Failed to fetch submissions', details: err?.message });
+  }
+});
+
+// Dedicated File Serving Endpoint: opens inline in tab or downloads on click
+app.get('/api/submissions/:id/file', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, download } = req.query as { name?: string; download?: string };
+
+    const cache = await loadSubmissionsCache();
+    const record = cache.find(
+      (item) =>
+        String(item.id) === String(id) ||
+        String(item._id) === String(id) ||
+        String(item.enrollmentNumber) === String(id)
+    );
+
+    if (!record) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    let foundFile: { name: string; type?: string; dataUrl: string } | null = null;
+
+    function searchFile(obj: any) {
+      if (!obj || typeof obj !== 'object' || foundFile) return;
+      if (typeof obj.name === 'string' && typeof obj.dataUrl === 'string') {
+        if (!name || obj.name.toLowerCase() === name.toLowerCase()) {
+          foundFile = obj;
+          return;
+        }
+      }
+      for (const val of Object.values(obj)) {
+        if (typeof val === 'object') searchFile(val);
+      }
+    }
+
+    searchFile(record);
+
+    if (!foundFile) {
+      return res.status(404).json({ error: 'Requested file not found in submission' });
+    }
+
+    const dataUrl: string = (foundFile as any).dataUrl;
+    if (dataUrl && dataUrl.startsWith('data:')) {
+      const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!match) {
+        return res.status(400).json({ error: 'Invalid base64 document format' });
+      }
+
+      const contentType = match[1] || 'application/pdf';
+      const fileBuffer = Buffer.from(match[2], 'base64');
+      const fileName = (foundFile as any).name || 'document.pdf';
+
+      res.setHeader('Content-Type', contentType);
+      const disposition = download === '1' || download === 'true' ? 'attachment' : 'inline';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
+      res.setHeader('Content-Length', fileBuffer.length);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(fileBuffer);
+    }
+
+    if (dataUrl && (dataUrl.startsWith('http') || dataUrl.startsWith('/'))) {
+      return res.redirect(dataUrl);
+    }
+
+    return res.status(404).json({ error: 'File data unavailable' });
+  } catch (err: any) {
+    console.error('Error serving submission file:', err);
+    res.status(500).json({ error: 'Failed to retrieve file', details: err?.message });
   }
 });
 
@@ -241,6 +376,11 @@ app.post('/api/submissions', async (req, res) => {
     const list = getLocalSubmissions();
     list.unshift(newRecord);
     saveLocalSubmissions(list);
+
+    // Update in-memory cache immediately
+    if (memorySubmissionsCache) {
+      memorySubmissionsCache.unshift(newRecord);
+    }
 
     if (pgConnected && pgPool) {
       try {
@@ -393,14 +533,83 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
+app.put('/api/submissions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload = req.body;
+    if (!payload) {
+      return res.status(400).json({ error: 'No data provided' });
+    }
+
+    payload.updatedAt = new Date().toISOString();
+
+    // Update in local storage
+    const localList = getLocalSubmissions();
+    const idx = localList.findIndex(
+      (item) => String(item.id) === String(id) || String(item._id) === String(id) || String(item.enrollmentNumber) === String(id)
+    );
+    if (idx !== -1) {
+      localList[idx] = { ...localList[idx], ...payload, id };
+      saveLocalSubmissions(localList);
+    }
+
+    // Update in memory cache
+    if (memorySubmissionsCache) {
+      const cIdx = memorySubmissionsCache.findIndex(
+        (item) => String(item.id) === String(id) || String(item._id) === String(id) || String(item.enrollmentNumber) === String(id)
+      );
+      if (cIdx !== -1) {
+        memorySubmissionsCache[cIdx] = { ...memorySubmissionsCache[cIdx], ...payload, id };
+      }
+    }
+
+    // Update in Neon DB
+    if (pgConnected && pgPool) {
+      try {
+        await pgPool.query(
+          `UPDATE submissions SET 
+            academic_year = $1,
+            semester = $2,
+            higher_studies_plan = $3,
+            selected_achievement_categories = $4,
+            raw_data = $5,
+            updated_at = NOW()
+          WHERE id::text = $6 OR enrollment_number = $6 OR raw_data->>'id' = $6`,
+          [
+            payload.academicYear || '',
+            payload.semester || '',
+            payload.higherStudiesPlan || '',
+            JSON.stringify(payload.selectedAchievementCategories || []),
+            JSON.stringify(payload),
+            id,
+          ]
+        );
+      } catch (dbErr) {
+        console.warn('[Storage Engine] Failed to update Neon DB:', dbErr);
+      }
+    }
+
+    res.json({ success: true, message: 'Record updated successfully.' });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update record', details: err?.message });
+  }
+});
+
 app.delete('/api/submissions/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
     // Delete from local storage
     let list = getLocalSubmissions();
-    list = list.filter((item) => item.id !== id && item._id !== id);
+    list = list.filter((item) => String(item.id) !== String(id) && String(item._id) !== String(id) && String(item.enrollmentNumber) !== String(id));
     saveLocalSubmissions(list);
+
+    // Delete from cache
+    if (memorySubmissionsCache) {
+      memorySubmissionsCache = memorySubmissionsCache.filter(
+        (item) => String(item.id) !== String(id) && String(item._id) !== String(id) && String(item.enrollmentNumber) !== String(id)
+      );
+    }
 
     // Delete from Neon DB if connected
     if (pgConnected && pgPool) {
@@ -422,13 +631,7 @@ app.delete('/api/submissions/:id', async (req, res) => {
 
 app.get('/api/export', async (req, res) => {
   try {
-    let list: any[] = [];
-    if (pgConnected && pgPool) {
-      const result = await pgPool.query('SELECT raw_data FROM submissions ORDER BY submitted_at DESC');
-      list = result.rows.map((r: any) => r.raw_data || r);
-    } else {
-      list = getLocalSubmissions();
-    }
+    const list = await loadSubmissionsCache();
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="student_outcomes_export.json"');
     res.send(JSON.stringify(list, null, 2));

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, GraduationCap, Briefcase, TrendingUp, Info } from 'lucide-react';
+import { LogOut, GraduationCap, Briefcase, TrendingUp, HelpCircle, Info } from 'lucide-react';
 import { ExitProgression, ExitPathway, UploadedFile } from '../types';
 import { FileUploadField } from './FileUploadField';
 
@@ -56,7 +56,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
             Are you exiting or reporting progression after Year 2, Year 3, or Year 4?
           </label>
           <p className="text-xs text-slate-500">
-            Check this box if you are completing an exit certificate/diploma or graduating and continuing into Higher Education, Employment, or Entrepreneurship.
+            Check this box if you are completing an exit certificate/diploma or graduating and continuing into Higher Education, Employment, Entrepreneurship, or other pathways.
           </p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
             <div className="space-y-1 leading-relaxed">
               <span className="font-bold">Document Format Requirements:</span>
               <p>
-                All documents must be scanned copies in PDF format (or clear image). The PDF must be legible with a maximum file size of <strong>2 MB</strong>. Ensure all candidate details and institutional stamps are fully visible.
+                All documents must be scanned copies in PDF format. The PDF must be legible with a maximum file size of <strong>2 MB</strong>. Ensure all candidate details and institutional stamps are fully visible.
               </p>
             </div>
           </div>
@@ -109,12 +109,13 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
             <label className="block text-xs font-semibold text-slate-700">
               Progression Pathway <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { id: 'Higher Education', icon: GraduationCap, label: '1. Higher Education' },
-                { id: 'Placement / Employment', icon: Briefcase, label: '2. Placement / Employment' },
-                { id: 'Entrepreneurship', icon: TrendingUp, label: '3. Entrepreneurship' },
-              ].map(({ id, icon: Icon, label }) => {
+                { id: 'Higher Education', icon: GraduationCap, label: '1. Higher Education', sub: 'University Admission' },
+                { id: 'Placement / Employment', icon: Briefcase, label: '2. Placement / Employment', sub: 'Job Offer / Joining' },
+                { id: 'Entrepreneurship', icon: TrendingUp, label: '3. Entrepreneurship', sub: 'GST / Venture Proof' },
+                { id: 'Other', icon: HelpCircle, label: '4. Other', sub: 'Reason / Current Status' },
+              ].map(({ id, icon: Icon, label, sub }) => {
                 const isSelected = exitProgression.pathway === id;
                 return (
                   <button
@@ -128,19 +129,15 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                     }`}
                   >
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-lg shrink-0 ${
                         isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold">{label}</p>
-                      <p className="text-[11px] text-slate-400">
-                        {id === 'Higher Education' && 'University Admission'}
-                        {id === 'Placement / Employment' && 'Job Offer / Joining'}
-                        {id === 'Entrepreneurship' && 'GST / Venture Proof'}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold truncate">{label}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{sub}</p>
                     </div>
                   </button>
                 );
@@ -189,7 +186,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-higher-ed-proof"
                     label="Admission Letter / Admission Confirmation from Institution"
-                    description="Upload 1 supported file. Max 2 MB (PDF format preferred). Must clearly indicate student's name, program, and admission details."
+                    description="Upload 1 supported file. Max 2 MB (PDF only). Must clearly indicate student's name, program, and admission details."
                     required={true}
                     value={exitProgression.admissionDocument}
                     onChange={(file) =>
@@ -241,7 +238,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-employment-proof"
                     label="Offer Letter / Appointment Letter / Employment Letter"
-                    description="Upload 1 supported file. Max 2 MB (PDF format preferred). Must clearly indicate student's name, designation, organization, and joining/employment details."
+                    description="Upload 1 supported file. Max 2 MB (PDF only). Must clearly indicate student's name, designation, organization, and joining/employment details."
                     required={true}
                     value={exitProgression.employmentDocument}
                     onChange={(file) =>
@@ -295,7 +292,7 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-entrepreneurship-proof"
                     label="GST Registration Certificate & Supporting Official Letter"
-                    description="Upload 1 supported file. Max 2 MB (PDF format preferred). Must confirm entrepreneurial activity with valid registration."
+                    description="Upload 1 supported file. Max 2 MB (PDF only). Must confirm entrepreneurial activity with valid registration."
                     required={true}
                     value={exitProgression.gstOrOfficialDocument}
                     onChange={(file) =>
@@ -304,6 +301,33 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                     maxSizeMB={2}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pathway 4: Other */}
+          {exitProgression.pathway === 'Other' && (
+            <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-xl space-y-4 animate-in fade-in duration-200">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                4. Other Progression Details
+              </h4>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Specify Reason / Current Status <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="exit-other-details"
+                  value={exitProgression.otherDetails || ''}
+                  onChange={(e) =>
+                    setExitProgression((prev) => ({ ...prev, otherDetails: e.target.value }))
+                  }
+                  placeholder="e.g. Preparing for competitive exams, Gap year, Family business, or Not pursuing further activity"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:border-indigo-500"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Please mention your current plan or status if you are not currently pursuing higher education, employment, or entrepreneurship.
+                </p>
               </div>
             </div>
           )}

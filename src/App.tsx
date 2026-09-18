@@ -10,6 +10,7 @@ import {
   GraduationCap,
   ShieldCheck,
   Lock,
+  X,
 } from 'lucide-react';
 import {
   AcademicYear,
@@ -36,6 +37,7 @@ import { RecordsList } from './components/RecordsList';
 
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminSettingsModal } from './components/AdminSettingsModal';
+import { Footer } from './components/Footer';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
@@ -74,6 +76,16 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Auto-dismiss success notification after 6 seconds
+  useEffect(() => {
+    if (submitSuccess) {
+      const timer = setTimeout(() => {
+        setSubmitSuccess(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitSuccess]);
 
 
   // Form State
@@ -332,7 +344,7 @@ export default function App() {
     setResearchPublicationDetails((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   };
 
-  const resetForm = () => {
+  const resetForm = (clearSuccess = true) => {
     setEnrollmentNumber('');
     setFullName('');
     setAcademicYear('2024-25');
@@ -355,7 +367,9 @@ export default function App() {
     }]);
     setExitProgression({ isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
     setSubmitError(null);
-    setSubmitSuccess(null);
+    if (clearSuccess) {
+      setSubmitSuccess(null);
+    }
     setEditingId(null);
   };
 
@@ -510,6 +524,10 @@ export default function App() {
         setSubmitError('GST Registration / Official Proof is required for Entrepreneurship exit.');
         return;
       }
+      if (exitProgression.pathway === 'Other' && !exitProgression.otherDetails?.trim()) {
+        setSubmitError('Please specify the reason / details for your exit progression.');
+        return;
+      }
     }
 
     const payload: StudentSubmission = {
@@ -564,11 +582,8 @@ export default function App() {
         throw new Error(resData.error || 'Failed to submit data');
       }
 
-      setSubmitSuccess(
-        editingId
-          ? `Record updated successfully!`
-          : `Student outcome submission recorded successfully in ${resData.database || 'Database'}!`
-      );
+      resetForm(false);
+      setSubmitSuccess('Form successfully uploaded.');
       setEditingId(null);
       fetchDbHealth();
       fetchSubmissions();
@@ -578,6 +593,7 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       setSubmitError(err.message || 'Error occurred while saving data. Please check connection and try again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
     }
@@ -599,7 +615,26 @@ export default function App() {
   const isYesHigherStudies = higherStudiesPlan && !isNoHigherStudies;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 pb-16">
+    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col">
+      {/* Floating Success Toast (Always Visible on Laptop & Mobile) */}
+      {submitSuccess && (
+        <div
+          id="global-floating-toast"
+          className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-emerald-600 text-white rounded-xl shadow-2xl border border-emerald-500 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md w-[90vw] sm:w-auto"
+        >
+          <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
+          <span className="text-sm font-bold flex-1">{submitSuccess}</span>
+          <button
+            type="button"
+            onClick={() => setSubmitSuccess(null)}
+            className="p-1 text-emerald-100 hover:text-white hover:bg-emerald-700/60 rounded-md transition-colors cursor-pointer"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top Navigation & Brand Header */}
       <Header
         currentTab={currentTab}
@@ -615,43 +650,27 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 space-y-4 sm:space-y-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12">
 
 
-        {/* Banner Alert for Success */}
+        {/* Minimal Clean Success Notification */}
         {submitSuccess && (
           <div
             id="submission-success-banner"
-            className="p-5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start justify-between shadow-xs animate-in fade-in"
+            className="p-3 sm:p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-emerald-900 shadow-xs animate-in fade-in"
           >
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-emerald-950">Submission Completed Successfully</h3>
-                <p className="text-xs text-emerald-800 leading-relaxed">{submitSuccess}</p>
-                <div className="pt-2 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    Submit Another Student
-                  </button>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        resetForm();
-                        setCurrentTab('records');
-                      }}
-                      className="px-3 py-1.5 bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100/50 rounded-lg text-xs font-medium cursor-pointer"
-                    >
-                      View All in Records List
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="flex items-center space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <p className="text-xs sm:text-sm font-semibold text-emerald-900">{submitSuccess}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setSubmitSuccess(null)}
+              className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/60 rounded transition-colors cursor-pointer"
+              title="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -747,27 +766,27 @@ export default function App() {
             {/* Main Form Action Bar */}
             <div
               id="form-action-bar"
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4"
+              className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-4"
             >
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
+                className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                Reset Form
+                <span>Reset Form</span>
               </button>
 
               <button
                 type="submit"
                 id="main-submit-button"
                 disabled={submitting}
-                className={`w-full sm:w-auto px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                className={`w-full sm:w-auto px-6 sm:px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
                   editingId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
                 }`}
               >
                 <Send className="w-4 h-4" />
-                {submitting ? 'Saving...' : editingId ? 'Update Record' : 'Submit Student Outcome Record'}
+                <span>{submitting ? 'Saving...' : editingId ? 'Update Record' : 'Submit Student Outcome Record'}</span>
               </button>
             </div>
           </form>
@@ -818,6 +837,9 @@ export default function App() {
         )}
       </main>
 
+      {/* Application Footer */}
+      <Footer />
+
       {/* Admin Login Dialog */}
       <AdminLoginModal
         isOpen={adminModalOpen}
@@ -840,14 +862,6 @@ export default function App() {
           sessionStorage.setItem('portal_admin_user', newUsername);
         }}
       />
-
-      {/* Footer */}
-      <footer className="mt-auto py-4 text-center border-t border-slate-100 bg-white">
-        <p className="text-xs text-slate-400">
-          Developed by{' '}
-          <span className="font-semibold text-indigo-600">Krupa Panchal</span>
-        </p>
-      </footer>
 
     </div>
   );

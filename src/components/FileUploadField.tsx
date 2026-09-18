@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, X, Eye } from 'lucide-react';
 import { UploadedFile } from '../types';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 interface FileUploadFieldProps {
   id: string;
@@ -20,7 +21,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
   required = false,
   value,
   onChange,
-  accept = '.pdf',
+  accept = '.pdf,application/pdf',
   maxSizeMB = 2,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,15 +33,24 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
     setErrorMessage(null);
     const maxBytes = maxSizeMB * 1024 * 1024;
 
-    // Validate PDF only
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    // Strict validation: Only PDF files allowed
+    const isPdf =
+      file.type === 'application/pdf' ||
+      file.name.toLowerCase().endsWith('.pdf');
+
     if (!isPdf) {
-      setErrorMessage('Only PDF files are allowed. Please upload a valid PDF document.');
+      setErrorMessage('Only PDF files are allowed. Please upload a valid .pdf document.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
     if (file.size > maxBytes) {
       setErrorMessage(`File size exceeds ${maxSizeMB} MB limit (${(file.size / (1024 * 1024)).toFixed(2)} MB). Please upload a smaller file.`);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -50,7 +60,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
       onChange({
         name: file.name,
         size: file.size,
-        type: file.type || 'application/pdf',
+        type: 'application/pdf',
         dataUrl,
         uploadedAt: new Date().toISOString(),
       });
@@ -118,7 +128,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  Verified &lt; {maxSizeMB}MB
+                  PDF Document &lt; {maxSizeMB}MB
                 </span>
               </div>
             </div>
@@ -186,60 +196,12 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
         </div>
       )}
 
-      {/* Document Preview Modal */}
-      {previewOpen && value && (
-        <div
-          id={`${id}-modal`}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-              <div>
-                <h4 className="font-semibold text-slate-900 text-sm">{value.name}</h4>
-                <p className="text-xs text-slate-500">{(value.size / 1024).toFixed(1)} KB • {value.type}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 overflow-auto flex-1 flex items-center justify-center bg-slate-100 min-h-[300px]">
-              {value.dataUrl.startsWith('data:image/') ? (
-                <img
-                  src={value.dataUrl}
-                  alt={value.name}
-                  className="max-h-[60vh] max-w-full rounded object-contain"
-                />
-              ) : value.dataUrl.startsWith('data:application/pdf') ? (
-                <iframe
-                  src={value.dataUrl}
-                  title={value.name}
-                  className="w-full h-[60vh] rounded border border-slate-200"
-                />
-              ) : (
-                <div className="text-center p-6 bg-white rounded-lg border border-slate-200">
-                  <FileText className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-slate-700">Preview not directly embeddable</p>
-                  <a
-                    href={value.dataUrl}
-                    download={value.name}
-                    className="mt-3 inline-block px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700"
-                  >
-                    Download File
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Reusable Document Preview Modal */}
+      <PdfPreviewModal
+        isOpen={previewOpen}
+        file={value || null}
+        onClose={() => setPreviewOpen(false)}
+      />
     </div>
   );
 };

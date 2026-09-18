@@ -18,8 +18,11 @@ import {
   RefreshCw,
   Pencil,
   Clock,
+  FileSpreadsheet,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { StudentSubmission, AcademicYear, Semester, UploadedFile, CompetitionAchievement } from '../types';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 interface RecordsListProps {
   submissions: StudentSubmission[];
@@ -44,6 +47,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [confirmDeleteTarget, setConfirmDeleteTarget] = useState<{ id: string; name: string; enrollment: string } | null>(null);
+  const [exportingType, setExportingType] = useState<'csv' | 'excel' | 'json' | null>(null);
 
   const filtered = submissions.filter((item) => {
     const s = searchTerm.toLowerCase();
@@ -58,100 +62,332 @@ export const RecordsList: React.FC<RecordsListProps> = ({
     return matchSearch && matchYear && matchSem;
   });
 
+  const getSubmissionDocuments = (sub: StudentSubmission) => {
+    const docs: { label: string; file: UploadedFile }[] = [];
+
+    if (sub.higherStudiesProof) {
+      docs.push({ label: 'Higher Studies Proof', file: sub.higherStudiesProof });
+    }
+
+    if (sub.competitionAchievements) {
+      for (const [cat, raw] of Object.entries(sub.competitionAchievements)) {
+        const arr = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        arr.forEach((ach, i) => {
+          if (ach.certificateFile) {
+            docs.push({ label: `${cat} #${i + 1} Certificate`, file: ach.certificateFile });
+          }
+        });
+      }
+    }
+
+    (sub.patentDetails || (sub.patentDetail ? [sub.patentDetail] : [])).forEach((p, idx) => {
+      if (p.proofFile) {
+        docs.push({ label: `Patent #${idx + 1} Proof`, file: p.proofFile });
+      }
+    });
+
+    (sub.startupDetails || (sub.startupDetail ? [sub.startupDetail] : [])).forEach((s, idx) => {
+      if (s.proofFile) {
+        docs.push({ label: `Startup #${idx + 1} Proof`, file: s.proofFile });
+      }
+    });
+
+    (sub.fundedProjectDetails || (sub.fundedProjectDetail ? [sub.fundedProjectDetail] : [])).forEach((fp, idx) => {
+      if (fp.proofFile) {
+        docs.push({ label: `Funded Project #${idx + 1} Proof`, file: fp.proofFile });
+      }
+    });
+
+    (sub.ssipProjectDetails || (sub.ssipProjectDetail ? [sub.ssipProjectDetail] : [])).forEach((sp, idx) => {
+      if (sp.proofFile) {
+        docs.push({ label: `SSIP Project #${idx + 1} Proof`, file: sp.proofFile });
+      }
+    });
+
+    (sub.researchPublicationDetails || (sub.researchPublicationDetail ? [sub.researchPublicationDetail] : [])).forEach((rp, idx) => {
+      if (rp.proofFile) {
+        docs.push({ label: `Publication #${idx + 1} Proof`, file: rp.proofFile });
+      }
+    });
+
+    if (sub.exitProgression?.admissionDocument) {
+      docs.push({ label: 'Exit Higher Ed Admission Proof', file: sub.exitProgression.admissionDocument });
+    }
+    if (sub.exitProgression?.employmentDocument) {
+      docs.push({ label: 'Exit Employment Proof', file: sub.exitProgression.employmentDocument });
+    }
+    if (sub.exitProgression?.gstOrOfficialDocument) {
+      docs.push({ label: 'Exit GST / Venture Proof', file: sub.exitProgression.gstOrOfficialDocument });
+    }
+
+    return docs;
+  };
+
+  const exportExcel = () => {
+    if (filtered.length === 0) return;
+    setExportingType('excel');
+
+    try {
+      const baseUrl = window.location.origin;
+      const data = filtered.map((sub) => {
+        const attachedDocs = getSubmissionDocuments(sub);
+        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
+        const docNames = attachedDocs.map((d) => `${d.label}: ${d.file.name}`).join(' | ') || 'None';
+        const docLinks = attachedDocs
+          .map((d) => {
+            const link = d.file.dataUrl && d.file.dataUrl.startsWith('http')
+              ? d.file.dataUrl
+              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
+              ? `${baseUrl}${d.file.dataUrl}`
+              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`;
+            return `${d.label}: ${link}`;
+          })
+          .join('\n') || 'None';
+
+        return {
+          'Enrollment Number': sub.enrollmentNumber || '',
+          'Full Name': sub.fullName || '',
+          'Academic Year': sub.academicYear || '',
+          'Semester': sub.semester || '',
+          'Higher Studies Plan': sub.higherStudiesPlan || '',
+          'Higher Studies University / Institute': sub.higherStudiesUniversityName || 'N/A',
+          'Achievement Categories': (sub.selectedAchievementCategories || []).join(', '),
+          'Exiting After': sub.exitProgression?.isExiting ? sub.exitProgression.exitYear : 'N/A',
+          'Progression Pathway': sub.exitProgression?.isExiting ? sub.exitProgression.pathway : 'N/A',
+          'Progression Details': sub.exitProgression?.isExiting
+            ? sub.exitProgression.pathway === 'Higher Education'
+              ? `${sub.exitProgression.institutionName || ''} - ${sub.exitProgression.programName || ''}`
+              : sub.exitProgression.pathway === 'Placement / Employment'
+              ? `${sub.exitProgression.companyName || ''} (${sub.exitProgression.designation || ''})`
+              : sub.exitProgression.pathway === 'Entrepreneurship'
+              ? `${sub.exitProgression.companyOrVentureName || ''} (GST: ${sub.exitProgression.gstNumber || ''})`
+              : sub.exitProgression.otherDetails || ''
+            : 'N/A',
+          'Attached Documents': docNames,
+          'Document Links': docLinks,
+          'Submitted At': sub.submittedAt || '',
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      // Format column widths for better readability
+      ws['!cols'] = [
+        { wch: 18 }, // Enrollment
+        { wch: 22 }, // Full Name
+        { wch: 14 }, // AY
+        { wch: 10 }, // Sem
+        { wch: 20 }, // Higher Studies Plan
+        { wch: 25 }, // University
+        { wch: 30 }, // Achievement Categories
+        { wch: 14 }, // Exiting After
+        { wch: 22 }, // Pathway
+        { wch: 30 }, // Progression Details
+        { wch: 35 }, // Attached Documents
+        { wch: 60 }, // Document Links
+        { wch: 22 }, // Submitted At
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Student Outcomes');
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const fileName = `student_outcomes_${Date.now()}.xlsx`;
+      const fileUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to export Excel:', e);
+    } finally {
+      setExportingType(null);
+    }
+  };
+
   const exportCSV = () => {
-    if (submissions.length === 0) return;
-    const headers = [
-      'Enrollment Number',
-      'Full Name',
-      'Academic Year',
-      'Semester',
-      'Higher Studies Plan',
-      'Higher Studies University / Institute',
-      'Achievement Categories',
-      'Exiting After',
-      'Progression Pathway',
-      'Submitted At',
-    ];
+    if (filtered.length === 0) return;
+    setExportingType('csv');
 
-    const rows = filtered.map((sub) => [
-      `"${sub.enrollmentNumber || ''}"`,
-      `"${sub.fullName || ''}"`,
-      `"${sub.academicYear || ''}"`,
-      `"${sub.semester || ''}"`,
-      `"${sub.higherStudiesPlan || ''}"`,
-      `"${sub.higherStudiesUniversityName || 'N/A'}"`,
-      `"${(sub.selectedAchievementCategories || []).join(', ')}"`,
-      `"${sub.exitProgression?.isExiting ? sub.exitProgression.exitYear : 'N/A'}"`,
-      `"${sub.exitProgression?.isExiting ? sub.exitProgression.pathway : 'N/A'}"`,
-      `"${sub.submittedAt || ''}"`,
-    ]);
+    try {
+      const baseUrl = window.location.origin;
+      const headers = [
+        'Enrollment Number',
+        'Full Name',
+        'Academic Year',
+        'Semester',
+        'Higher Studies Plan',
+        'Higher Studies University / Institute',
+        'Achievement Categories',
+        'Exiting After',
+        'Progression Pathway',
+        'Attached Documents',
+        'Document Links',
+        'Submitted At',
+      ];
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `student_outcomes_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const rows = filtered.map((sub) => {
+        const attachedDocs = getSubmissionDocuments(sub);
+        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
+        const docNames = attachedDocs.map((d) => `${d.label}: ${d.file.name}`).join(' | ') || 'None';
+        const docLinks = attachedDocs
+          .map((d) => {
+            const link = d.file.dataUrl && d.file.dataUrl.startsWith('http')
+              ? d.file.dataUrl
+              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
+              ? `${baseUrl}${d.file.dataUrl}`
+              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`;
+            return `${d.label}: ${link}`;
+          })
+          .join(' | ') || 'None';
+
+        return [
+          `"${sub.enrollmentNumber || ''}"`,
+          `"${sub.fullName || ''}"`,
+          `"${sub.academicYear || ''}"`,
+          `"${sub.semester || ''}"`,
+          `"${sub.higherStudiesPlan || ''}"`,
+          `"${sub.higherStudiesUniversityName || 'N/A'}"`,
+          `"${(sub.selectedAchievementCategories || []).join(', ')}"`,
+          `"${sub.exitProgression?.isExiting ? sub.exitProgression.exitYear : 'N/A'}"`,
+          `"${sub.exitProgression?.isExiting ? sub.exitProgression.pathway : 'N/A'}"`,
+          `"${docNames}"`,
+          `"${docLinks}"`,
+          `"${sub.submittedAt || ''}"`,
+        ];
+      });
+
+      const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const fileName = `student_outcomes_${Date.now()}.csv`;
+      const fileUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to export CSV:', e);
+    } finally {
+      setExportingType(null);
+    }
   };
 
   const exportJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(submissions, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `student_outcomes_${Date.now()}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    if (submissions.length === 0) return;
+    setExportingType('json');
+
+    try {
+      const baseUrl = window.location.origin;
+      const exportData = filtered.map((sub) => {
+        const attachedDocs = getSubmissionDocuments(sub);
+        const subId = sub.id || (sub as any)._id || sub.enrollmentNumber;
+        return {
+          ...sub,
+          documentLinks: attachedDocs.map((d) => ({
+            label: d.label,
+            fileName: d.file.name,
+            link: d.file.dataUrl && d.file.dataUrl.startsWith('http')
+              ? d.file.dataUrl
+              : d.file.dataUrl && d.file.dataUrl.startsWith('/api')
+              ? `${baseUrl}${d.file.dataUrl}`
+              : `${baseUrl}/api/submissions/${encodeURIComponent(subId)}/file?name=${encodeURIComponent(d.file.name)}`,
+          })),
+        };
+      });
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' });
+      const fileName = `student_outcomes_${Date.now()}.json`;
+      const fileUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Failed to export JSON:', e);
+    } finally {
+      setExportingType(null);
+    }
   };
 
   return (
     <div className="space-y-6" id="records-view-container">
       {/* Top Header Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            Student Outcome Submissions Database
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+            <span>Student Outcome Submissions Database</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
-              {filtered.length} of {submissions.length}
+              {filtered.length}
             </span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 mt-0.5">
             Backed by <strong className="text-slate-700">{dbType}</strong>. All student entries, certificates, and admission proofs.
           </p>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex items-center flex-wrap gap-2 w-full md:w-auto">
           <button
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="flex-1 xs:flex-none justify-center px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <span>Refresh</span>
+          </button>
+          <button
+            type="button"
+            onClick={exportExcel}
+            disabled={filtered.length === 0 || Boolean(exportingType)}
+            className="flex-1 xs:flex-none justify-center px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap"
+          >
+            {exportingType === 'excel' ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+            ) : (
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+            )}
+            <span>Export to Excel</span>
           </button>
           <button
             type="button"
             onClick={exportCSV}
-            disabled={filtered.length === 0}
-            className="px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            disabled={filtered.length === 0 || Boolean(exportingType)}
+            className="flex-1 xs:flex-none justify-center px-3 py-2 text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap"
           >
-            <Download className="w-3.5 h-3.5" />
-            Export CSV
+            {exportingType === 'csv' ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-teal-700" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>Export CSV</span>
           </button>
           <button
             type="button"
             onClick={exportJSON}
-            disabled={submissions.length === 0}
-            className="px-3 py-2 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            disabled={submissions.length === 0 || Boolean(exportingType)}
+            className="flex-1 xs:flex-none justify-center px-3 py-2 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap"
           >
-            <Download className="w-3.5 h-3.5" />
-            Export JSON
+            {exportingType === 'json' ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-700" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>Export JSON</span>
           </button>
         </div>
       </div>
+
 
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -199,9 +435,8 @@ export const RecordsList: React.FC<RecordsListProps> = ({
 
       {/* Submissions List */}
       {loading ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 text-sm">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
-          Loading student submissions from {dbType}...
+        <div className="bg-white rounded-xl border border-slate-200 p-12 flex items-center justify-center">
+          <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center space-y-3">
@@ -244,8 +479,8 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                     </p>
                   </div>
 
-                  <div className="flex items-center space-x-2 self-end sm:self-center">
-                    <div className="text-right hidden md:block">
+                  <div className="flex items-center space-x-1.5 sm:space-x-2 self-end sm:self-center shrink-0">
+                    <div className="text-right hidden md:block mr-2">
                       <p className="text-[11px] text-slate-400 flex items-center gap-1 justify-end">
                         <Clock className="w-3 h-3" />
                         {new Date(item.submittedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -264,19 +499,31 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
+                        onEdit(item);
+                      }}
+                      className="p-2 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                      title="Edit this record"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setConfirmDeleteTarget({
                           id,
                           name: item.fullName,
                           enrollment: item.enrollmentNumber,
                         });
                       }}
-                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                      title="Delete record"
+                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      title="Delete this record"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    <div className="text-slate-400">
+                    <div className="text-slate-400 p-1">
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
                   </div>
@@ -317,6 +564,8 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                         <span className="font-semibold text-slate-800">Sem {item.semester}</span>
                       </div>
                     </div>
+
+
 
                     {/* Higher Studies Details & Proof */}
                     <div className="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2">
@@ -399,6 +648,12 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                                 View GST / Venture Document ({item.exitProgression.gstOrOfficialDocument.name})
                               </button>
                             )}
+                          </div>
+                        )}
+
+                        {item.exitProgression.pathway === 'Other' && (
+                          <div className="space-y-1">
+                            <p><strong>Status / Details:</strong> {item.exitProgression.otherDetails || 'Not specified'}</p>
                           </div>
                         )}
                       </div>
@@ -565,68 +820,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
       )}
 
       {/* Global Document Viewer Modal */}
-      {previewFile && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-          onClick={() => setPreviewFile(null)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-              <div>
-                <h4 className="font-semibold text-slate-900 text-sm">{previewFile.name}</h4>
-                <p className="text-xs text-slate-500">{(previewFile.size / 1024).toFixed(1)} KB • {previewFile.type}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={previewFile.dataUrl}
-                  download={previewFile.name}
-                  className="px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 flex items-center gap-1"
-                >
-                  <Download className="w-3 h-3" />
-                  Download
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewFile(null)}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <div className="p-4 overflow-auto flex-1 flex items-center justify-center bg-slate-100 min-h-[350px]">
-              {previewFile.dataUrl.startsWith('data:image/') ? (
-                <img
-                  src={previewFile.dataUrl}
-                  alt={previewFile.name}
-                  className="max-h-[65vh] max-w-full rounded object-contain shadow-xs"
-                />
-              ) : previewFile.dataUrl.startsWith('data:application/pdf') ? (
-                <iframe
-                  src={previewFile.dataUrl}
-                  title={previewFile.name}
-                  className="w-full h-[65vh] rounded border border-slate-200"
-                />
-              ) : (
-                <div className="text-center p-6 bg-white rounded-lg border border-slate-200">
-                  <FileText className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-slate-700">Document ready for download</p>
-                  <a
-                    href={previewFile.dataUrl}
-                    download={previewFile.name}
-                    className="mt-3 inline-block px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700"
-                  >
-                    Download File
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PdfPreviewModal
+        isOpen={Boolean(previewFile)}
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
 
       {/* In-App Delete Confirmation Modal */}
       {confirmDeleteTarget && (

@@ -230,17 +230,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                 className="p-3.5 sm:p-5 bg-slate-50/90 border border-slate-200 rounded-xl space-y-4"
               >
                 {/* Category Header */}
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-2.5 gap-2">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-indigo-600" />
-                    {cat} Entries ({entries.length})
+                    <Award className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>{cat} Entries ({entries.length})</span>
                   </h3>
                   <button
                     type="button"
                     onClick={() => addCompetitionEntry(cat)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
                   >
-                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                    <Plus className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                     <span>Add Another {cat}</span>
                   </button>
                 </div>
@@ -393,7 +393,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                           <FileUploadField
                             id={`certificate-${cat}-${index}`}
                             label="Upload Certificate"
-                            description="Upload 1 supported file. Max 2 MB (PDF or image proof)."
+                            description="Upload 1 supported file. Max 2 MB (PDF only)."
                             value={data.certificateFile}
                             onChange={(file) => updateCompetitionEntry(cat, index, { certificateFile: file })}
                             maxSizeMB={2}
@@ -422,17 +422,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {/* Patent Sub-form */}
         {selectedCategories.includes('Patent') && (
           <div id="form-section-patent" className="p-3.5 sm:p-5 bg-amber-50/50 border border-amber-200 rounded-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-amber-200 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-200 pb-2.5 gap-2">
               <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-amber-600" />
-                Patent Details ({safePatentDetails.length})
+                <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Patent Details ({safePatentDetails.length})</span>
               </h3>
               <button
                 type="button"
                 onClick={addPatent}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-900 bg-white hover:bg-amber-50 border border-amber-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-900 bg-white hover:bg-amber-50 border border-amber-300 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
               >
-                <Plus className="w-3.5 h-3.5 text-amber-600" />
+                <Plus className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                 <span>Add Another Patent</span>
               </button>
             </div>
@@ -485,7 +485,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
 
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold text-slate-700">Patent Status</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {(['Filed', 'Published', 'Granted'] as const).map((st) => (
                           <label
                             key={st}
@@ -525,7 +525,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-patent-proof-${index}`}
                         label="Upload Patent Proof"
-                        description="Upload 1 supported file. Max 2 MB (Filing receipt, journal, or grant certificate)."
+                        description="Upload 1 supported file. Max 2 MB (PDF only - Filing receipt, journal, or grant certificate)."
                         value={patent.proofFile}
                         onChange={(file) => updatePatent(index, { proofFile: file })}
                         maxSizeMB={2}
@@ -541,17 +541,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {/* Startup Sub-form */}
         {selectedCategories.includes('Startup') && (
           <div id="form-section-startup" className="p-3.5 sm:p-5 bg-emerald-50/50 border border-emerald-200 rounded-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-emerald-200 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-emerald-200 pb-2.5 gap-2">
               <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
-                <Rocket className="w-4 h-4 text-emerald-600" />
-                Startup Ventures ({safeStartupDetails.length})
+                <Rocket className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Startup Ventures ({safeStartupDetails.length})</span>
               </h3>
               <button
                 type="button"
                 onClick={addStartup}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-900 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-900 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
               >
-                <Plus className="w-3.5 h-3.5 text-emerald-600" />
+                <Plus className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span>Add Another Startup</span>
               </button>
             </div>
@@ -645,7 +645,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-startup-proof-${index}`}
                         label="Upload Startup Proof"
-                        description="Upload 1 supported file. Max 2 MB (Incorporation certificate, DPIIT letter, or incubation proof)."
+                        description="Upload 1 supported file. Max 2 MB (PDF only - Incorporation certificate, DPIIT letter, or incubation proof)."
                         value={startup.proofFile}
                         onChange={(file) => updateStartup(index, { proofFile: file })}
                         maxSizeMB={2}
@@ -661,17 +661,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {/* Funded Project Sub-form */}
         {selectedCategories.includes('Funded Project') && (
           <div id="form-section-funded-project" className="p-3.5 sm:p-5 bg-blue-50/50 border border-blue-200 rounded-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-blue-200 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-blue-200 pb-2.5 gap-2">
               <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-blue-600" />
-                Funded Projects ({safeFundedProjectDetails.length})
+                <DollarSign className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Funded Projects ({safeFundedProjectDetails.length})</span>
               </h3>
               <button
                 type="button"
                 onClick={addFundedProject}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
               >
-                <Plus className="w-3.5 h-3.5 text-blue-600" />
+                <Plus className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 <span>Add Another Funded Project</span>
               </button>
             </div>
@@ -737,7 +737,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
 
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold text-slate-700">Project Status</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {(['Approved', 'Ongoing', 'Completed'] as const).map((st) => (
                           <label
                             key={st}
@@ -765,7 +765,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-funding-proof-${index}`}
                         label="Upload Funding / Approval Proof"
-                        description="Upload 1 supported file. Max 2 MB (Sanction letter or disbursement proof)."
+                        description="Upload 1 supported file. Max 2 MB (PDF only - Sanction letter or disbursement proof)."
                         value={project.proofFile}
                         onChange={(file) => updateFundedProject(index, { proofFile: file })}
                         maxSizeMB={2}
@@ -781,17 +781,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {/* SSIP Project Sub-form */}
         {selectedCategories.includes('SSIP Project') && (
           <div id="form-section-ssip" className="p-3.5 sm:p-5 bg-purple-50/50 border border-purple-200 rounded-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-purple-200 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-purple-200 pb-2.5 gap-2">
               <h3 className="text-sm font-bold text-purple-950 flex items-center gap-2">
-                <Award className="w-4 h-4 text-purple-600" />
-                SSIP Project Details ({safeSSIPProjectDetails.length})
+                <Award className="w-4 h-4 text-purple-600 shrink-0" />
+                <span>SSIP Project Details ({safeSSIPProjectDetails.length})</span>
               </h3>
               <button
                 type="button"
                 onClick={addSSIPProject}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-900 bg-white hover:bg-purple-50 border border-purple-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-900 bg-white hover:bg-purple-50 border border-purple-300 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
               >
-                <Plus className="w-3.5 h-3.5 text-purple-600" />
+                <Plus className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span>Add Another SSIP Project</span>
               </button>
             </div>
@@ -831,7 +831,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
 
                     <div className="space-y-1 sm:col-span-2">
                       <label className="block text-xs font-semibold text-slate-700">SSIP Project Status</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
                         {(['Selected', 'Approved', 'Funded', 'Ongoing', 'Completed'] as const).map((st) => (
                           <label
                             key={st}
@@ -872,7 +872,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-ssip-proof-${index}`}
                         label="Upload SSIP Proof (File Upload – Required)"
-                        description="Upload 1 supported file. Max 2 MB (SSIP Committee sanction order or grant letter)."
+                        description="Upload 1 supported file. Max 2 MB (PDF only - SSIP Committee sanction order or grant letter)."
                         required={true}
                         value={ssip.proofFile}
                         onChange={(file) => updateSSIPProject(index, { proofFile: file })}
@@ -889,17 +889,17 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
         {/* Research Publication Sub-form */}
         {selectedCategories.includes('Research Publication') && (
           <div id="form-section-publication" className="p-3.5 sm:p-5 bg-teal-50/50 border border-teal-200 rounded-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-teal-200 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-teal-200 pb-2.5 gap-2">
               <h3 className="text-sm font-bold text-teal-950 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-teal-600" />
-                Research Publications ({safeResearchPublicationDetails.length})
+                <BookOpen className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>Research Publications ({safeResearchPublicationDetails.length})</span>
               </h3>
               <button
                 type="button"
                 onClick={addResearchPublication}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-900 bg-white hover:bg-teal-50 border border-teal-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-900 bg-white hover:bg-teal-50 border border-teal-300 rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
               >
-                <Plus className="w-3.5 h-3.5 text-teal-600" />
+                <Plus className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                 <span>Add Another Publication</span>
               </button>
             </div>
@@ -963,7 +963,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
 
                     <div className="space-y-1 sm:col-span-2">
                       <label className="block text-xs font-semibold text-slate-700">Publication Type</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
                         {(['Journal', 'Conference', 'Book', 'Chapter', 'Other'] as const).map((t) => (
                           <label
                             key={t}
@@ -989,7 +989,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
 
                     <div className="space-y-1 sm:col-span-2">
                       <label className="block text-xs font-semibold text-slate-700">Publication Status</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {(['Published', 'Accepted', 'Presented'] as const).map((st) => (
                           <label
                             key={st}
@@ -1017,7 +1017,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-publication-proof-${index}`}
                         label="Upload Publication Proof"
-                        description="Upload 1 supported file. Max 2 MB (Paper first page, acceptance letter, or proceedings copy)."
+                        description="Upload 1 supported file. Max 2 MB (PDF only - Paper first page, acceptance letter, or proceedings copy)."
                         value={pub.proofFile}
                         onChange={(file) => updateResearchPublication(index, { proofFile: file })}
                         maxSizeMB={2}

@@ -58,17 +58,17 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between py-2.5 md:py-0 md:h-16 gap-2.5 md:gap-4">
 
           {/* Top / Left: Brand & Title */}
-          <div className="flex items-center justify-between md:justify-start gap-2.5 min-w-0">
-            <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center justify-between md:justify-start gap-2 sm:gap-3 min-w-0 w-full md:w-auto">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs shrink-0">
                 <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate leading-tight">
                   <span className="hidden sm:inline">Student Outcome &amp; Achievement Data Collection</span>
                   <span className="inline sm:hidden">Student Outcome Portal</span>
                 </h1>
-                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight truncate hidden xs:block sm:block">
+                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight truncate hidden xs:block">
                   Academic Participation &amp; Progression Portal
                 </p>
               </div>
@@ -76,19 +76,17 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Mobile-only DB status icon (Admin Only) */}
             {isAdmin && (
-              <div className="flex md:hidden items-center">
+              <div className="flex md:hidden items-center shrink-0">
                 <div
                   title={dbStatus.isNeon ? 'Neon DB Active' : dbStatus.isMongo ? 'MongoDB Active' : 'Local Storage'}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border ${
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                     isOnlineDb
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                       : 'bg-slate-50 text-slate-700 border-slate-300'
                   }`}
                 >
                   <Database className={`w-3 h-3 shrink-0 ${isOnlineDb ? 'text-emerald-600' : 'text-indigo-600'}`} />
-                  <span className="hidden sm:inline">
-                    {dbStatus.isNeon ? 'Neon' : dbStatus.isMongo ? 'Mongo' : 'Local'}
-                  </span>
+                  <span>{dbStatus.isNeon ? 'Neon' : dbStatus.isMongo ? 'Mongo' : 'Local'}</span>
                   <span
                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                       isOnlineDb ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
@@ -100,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Right / Bottom Controls */}
-          <div className="flex items-center justify-between md:justify-end gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
+          <div className="flex items-center justify-between md:justify-end gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap w-full md:w-auto">
 
             {/* Desktop DB Status Badge (Admin Only) */}
             {isAdmin && (
@@ -126,11 +124,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
                 {/* Admin name badge */}
                 <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full whitespace-nowrap">
                   <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600 shrink-0" />
-                  <span className="text-[11px] sm:text-xs font-semibold text-purple-900 truncate max-w-[80px] sm:max-w-none">
+                  <span className="text-[11px] sm:text-xs font-semibold text-purple-900 truncate max-w-[70px] xs:max-w-[100px] sm:max-w-none">
                     {adminUsername || 'Admin'}
                   </span>
                 </div>
@@ -143,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer whitespace-nowrap"
                 >
                   <Settings className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="hidden sm:inline">Settings</span>
+                  <span className="hidden xs:inline sm:inline">Settings</span>
                 </button>
 
                 {/* Sign out button */}
@@ -154,16 +152,16 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-900 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer whitespace-nowrap"
                 >
                   <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="hidden sm:inline">Sign Out</span>
+                  <span className="hidden xs:inline sm:inline">Sign Out</span>
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={onOpenAdminModal}
-                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
+                <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span>Admin Login</span>
               </button>
             )}
@@ -174,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Divider */}
                 <div className="hidden md:block w-px h-5 bg-slate-200 shrink-0" />
 
-                <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">
+                <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0 ml-auto md:ml-0">
                   <button
                     type="button"
                     id="nav-tab-form"
@@ -186,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }`}
                   >
                     <PlusCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span>Data Form</span>
+                    <span>Form</span>
                   </button>
                   <button
                     type="button"

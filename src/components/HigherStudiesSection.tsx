@@ -157,7 +157,7 @@ export const HigherStudiesSection: React.FC<HigherStudiesSectionProps> = ({
           <FileUploadField
             id="higher-studies-proof-upload"
             label="Admit Card / Admission Letter / Confirmation Document"
-            description="Upload 1 supported file. Max 2 MB (PDF or Image)."
+            description="Upload 1 supported file. Max 2 MB (PDF only)."
             required={true}
             value={higherStudiesProof}
             onChange={setHigherStudiesProof}
