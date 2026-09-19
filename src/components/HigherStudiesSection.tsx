@@ -11,6 +11,7 @@ interface HigherStudiesSectionProps {
   higherStudiesProof?: UploadedFile;
   setHigherStudiesProof: (file?: UploadedFile) => void;
   errors?: Record<string, string>;
+  enrollmentNumber?: string;
 }
 
 const HIGHER_STUDIES_OPTIONS: HigherStudiesPlan[] = [
@@ -28,6 +29,7 @@ export const HigherStudiesSection: React.FC<HigherStudiesSectionProps> = ({
   higherStudiesProof,
   setHigherStudiesProof,
   errors = {},
+  enrollmentNumber = '',
 }) => {
   const isNoSelected = higherStudiesPlan === 'No, I do not plan to pursue higher studies';
   const isYesSelected = higherStudiesPlan && !isNoSelected;
@@ -189,6 +191,8 @@ export const HigherStudiesSection: React.FC<HigherStudiesSectionProps> = ({
           <FileUploadField
             id="higher-studies-proof-upload"
             label="Admit Card / Admission Letter / Confirmation Document"
+            documentName="Higher_Studies_Proof"
+            enrollmentNumber={enrollmentNumber}
             description="Upload 1 supported file. Max 2 MB (PDF only)."
             required={true}
             value={higherStudiesProof}

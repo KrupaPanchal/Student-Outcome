@@ -62,6 +62,8 @@ interface AchievementTypesSectionProps {
   addResearchPublication?: () => void;
   updateResearchPublication?: (index: number, updates: Partial<ResearchPublicationDetail>) => void;
   removeResearchPublication?: (index: number) => void;
+
+  enrollmentNumber?: string;
 }
 
 export const ALL_ACHIEVEMENT_CATEGORIES: { id: AchievementCategory; label: string; icon: any }[] = [
@@ -115,6 +117,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
   addResearchPublication = () => {},
   updateResearchPublication = (_index: number, _updates: Partial<ResearchPublicationDetail>) => {},
   removeResearchPublication = (_index: number) => {},
+  enrollmentNumber = '',
 }) => {
   const handleToggle = (cat: AchievementCategory) => {
     if (onToggleCategory) {
@@ -393,6 +396,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                           <FileUploadField
                             id={`certificate-${cat}-${index}`}
                             label="Upload Certificate"
+                            documentName={`${cat.replace(/[^a-zA-Z0-9]+/g, '_')}_Certificate${entries.length > 1 ? `_${index + 1}` : ''}`}
+                            enrollmentNumber={enrollmentNumber}
                             description="Upload 1 supported file. Max 2 MB (PDF only)."
                             value={data.certificateFile}
                             onChange={(file) => updateCompetitionEntry(cat, index, { certificateFile: file })}
@@ -525,6 +530,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-patent-proof-${index}`}
                         label="Upload Patent Proof"
+                        documentName={`Patent_Proof${patentList.length > 1 ? `_${index + 1}` : ''}`}
+                        enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Filing receipt, journal, or grant certificate)."
                         value={patent.proofFile}
                         onChange={(file) => updatePatent(index, { proofFile: file })}
@@ -645,6 +652,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-startup-proof-${index}`}
                         label="Upload Startup Proof"
+                        documentName={`Startup_Proof${startupList.length > 1 ? `_${index + 1}` : ''}`}
+                        enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Incorporation certificate, DPIIT letter, or incubation proof)."
                         value={startup.proofFile}
                         onChange={(file) => updateStartup(index, { proofFile: file })}
@@ -765,6 +774,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-funding-proof-${index}`}
                         label="Upload Funding / Approval Proof"
+                        documentName={`Funded_Project_Proof${fundedList.length > 1 ? `_${index + 1}` : ''}`}
+                        enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Sanction letter or disbursement proof)."
                         value={project.proofFile}
                         onChange={(file) => updateFundedProject(index, { proofFile: file })}
@@ -872,6 +883,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-ssip-proof-${index}`}
                         label="Upload SSIP Proof (File Upload – Required)"
+                        documentName={`SSIP_Project_Proof${ssipList.length > 1 ? `_${index + 1}` : ''}`}
+                        enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - SSIP Committee sanction order or grant letter)."
                         required={true}
                         value={ssip.proofFile}
@@ -1017,6 +1030,8 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-publication-proof-${index}`}
                         label="Upload Publication Proof"
+                        documentName={`Research_Publication_Proof${pubList.length > 1 ? `_${index + 1}` : ''}`}
+                        enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Paper first page, acceptance letter, or proceedings copy)."
                         value={pub.proofFile}
                         onChange={(file) => updateResearchPublication(index, { proofFile: file })}

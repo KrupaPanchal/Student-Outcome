@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle, X, Eye } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, X, Eye, Sparkles, RefreshCw } from 'lucide-react';
 import { UploadedFile } from '../types';
 import { PdfPreviewModal } from './PdfPreviewModal';
+import { compressPdfFile, getStandardizedFilename, cleanDocumentIdentifier } from '../utils/documentUtils';
 
 interface FileUploadFieldProps {
   id: string;
@@ -12,6 +13,8 @@ interface FileUploadFieldProps {
   onChange: (file?: UploadedFile) => void;
   accept?: string;
   maxSizeMB?: number;
+  documentName?: string;
+  enrollmentNumber?: string;
 }
 
 export const FileUploadField: React.FC<FileUploadFieldProps> = ({
@@ -23,13 +26,16 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
   onChange,
   accept = '.pdf,application/pdf',
   maxSizeMB = 2,
+  documentName,
+  enrollmentNumber,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setErrorMessage(null);
     const maxBytes = maxSizeMB * 1024 * 1024;
 
@@ -54,21 +60,35 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    setIsCompressing(true);
+    try {
+      // Automatic lossless compression during upload
+      const { dataUrl, originalSize, compressedSize, compressed } = await compressPdfFile(file);
+
+      // Determine clean document name and standardized filename: <Enrollment>_<DocumentName>.pdf
+      const effectiveDocName = documentName || cleanDocumentIdentifier(label);
+      const standardizedName = enrollmentNumber
+        ? getStandardizedFilename(enrollmentNumber, effectiveDocName)
+        : file.name;
+
       onChange({
-        name: file.name,
-        size: file.size,
+        name: standardizedName,
+        size: compressedSize,
         type: 'application/pdf',
         dataUrl,
         uploadedAt: new Date().toISOString(),
+        compressed,
+        originalSize,
+        compressedSize,
+        documentName: effectiveDocName,
+        documentLabel: label,
       });
-    };
-    reader.onerror = () => {
-      setErrorMessage('Failed to read the file. Please try again.');
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error('Error processing PDF upload:', err);
+      setErrorMessage('Failed to read and optimize the file. Please try again.');
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -105,6 +125,11 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
     }
   };
 
+  const savingsPercent =
+    value?.originalSize && value?.compressedSize && value.originalSize > value.compressedSize
+      ? Math.round(((value.originalSize - value.compressedSize) / value.originalSize) * 100)
+      : null;
+
   return (
     <div className="w-full space-y-1.5" id={`${id}-container`}>
       <label htmlFor={id} className="block text-sm font-semibold text-slate-800">
@@ -112,7 +137,12 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
       </label>
       <p className="text-xs text-slate-500">{description}</p>
 
-      {value ? (
+      {isCompressing ? (
+        <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-lg flex items-center justify-center space-x-2.5 text-xs text-indigo-700 font-medium animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+          <span>Optimizing &amp; Compressing PDF Document...</span>
+        </div>
+      ) : value ? (
         <div
           id={`${id}-uploaded-card`}
           className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-sm text-slate-800 gap-2 sm:gap-3"
@@ -125,6 +155,15 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
               <p className="font-medium text-xs sm:text-sm text-slate-900 truncate">{value.name}</p>
               <div className="flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs text-emerald-700 flex-wrap">
                 <span>{(value.size / 1024).toFixed(1)} KB</span>
+                {savingsPercent ? (
+                  <>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      Compressed {savingsPercent}%
+                    </span>
+                  </>
+                ) : null}
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />

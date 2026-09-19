@@ -694,15 +694,14 @@ export default function App() {
         adminUsername={adminUsername}
         onOpenAdminModal={() => setAdminModalOpen(true)}
         onAdminLogout={handleAdminLogout}
-        onOpenMongoModal={() => {}}
+        onOpenMongoModal={() => { }}
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
 
       {/* Main Container */}
       <main
-        className={`${
-          isAdmin ? 'max-w-7xl px-3 sm:px-6 lg:px-8' : 'max-w-4xl px-3 sm:px-6'
-        } mx-auto pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12`}
+        className={`${isAdmin ? 'max-w-7xl px-3 sm:px-6 lg:px-8' : 'max-w-4xl px-3 sm:px-6'
+          } mx-auto pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12`}
       >
         {isAdmin ? (
           /* Admin View: Records Management Dashboard (Form completely removed) */

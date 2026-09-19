@@ -6,11 +6,13 @@ import { FileUploadField } from './FileUploadField';
 interface ExitProgressionSectionProps {
   exitProgression: ExitProgression;
   setExitProgression: React.Dispatch<React.SetStateAction<ExitProgression>>;
+  enrollmentNumber?: string;
 }
 
 export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
   exitProgression,
   setExitProgression,
+  enrollmentNumber = '',
 }) => {
   const handleToggle = (checked: boolean) => {
     setExitProgression((prev) => ({
@@ -186,6 +188,8 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-higher-ed-proof"
                     label="Admission Letter / Admission Confirmation from Institution"
+                    documentName="Exit_Higher_Education_Proof"
+                    enrollmentNumber={enrollmentNumber}
                     description="Upload 1 supported file. Max 2 MB (PDF only). Must clearly indicate student's name, program, and admission details."
                     required={true}
                     value={exitProgression.admissionDocument}
@@ -238,6 +242,8 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-employment-proof"
                     label="Offer Letter / Appointment Letter / Employment Letter"
+                    documentName="Exit_Employment_Proof"
+                    enrollmentNumber={enrollmentNumber}
                     description="Upload 1 supported file. Max 2 MB (PDF only). Must clearly indicate student's name, designation, organization, and joining/employment details."
                     required={true}
                     value={exitProgression.employmentDocument}
@@ -292,6 +298,8 @@ export const ExitProgressionSection: React.FC<ExitProgressionSectionProps> = ({
                   <FileUploadField
                     id="exit-entrepreneurship-proof"
                     label="GST Registration Certificate & Supporting Official Letter"
+                    documentName="Exit_GST_Proof"
+                    enrollmentNumber={enrollmentNumber}
                     description="Upload 1 supported file. Max 2 MB (PDF only). Must confirm entrepreneurial activity with valid registration."
                     required={true}
                     value={exitProgression.gstOrOfficialDocument}

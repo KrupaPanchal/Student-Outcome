@@ -29,8 +29,13 @@ export interface UploadedFile {
   name: string;
   size: number;
   type: string;
-  dataUrl: string; // Base64 encoded for PDF or image
+  dataUrl: string; // Base64 encoded for PDF
   uploadedAt: string;
+  compressed?: boolean;
+  originalSize?: number;
+  compressedSize?: number;
+  documentName?: string;
+  documentLabel?: string;
 }
 
 export interface CompetitionAchievement {
