@@ -3,7 +3,6 @@ import {
   GraduationCap,
   Database,
   FileSpreadsheet,
-  PlusCircle,
   ShieldCheck,
   Lock,
   LogOut,
@@ -11,8 +10,6 @@ import {
 } from 'lucide-react';
 
 interface HeaderProps {
-  currentTab: 'form' | 'records';
-  setCurrentTab: (tab: 'form' | 'records') => void;
   submissionsCount: number;
   dbStatus: {
     database: string;
@@ -20,7 +17,7 @@ interface HeaderProps {
     isMongo?: boolean;
     neonConfigured?: boolean;
     mongoConfigured?: boolean;
-    status: string;
+    status?: string;
   };
   isAdmin: boolean;
   adminUsername?: string;
@@ -31,8 +28,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentTab,
-  setCurrentTab,
   submissionsCount,
   dbStatus,
   isAdmin,
@@ -43,14 +38,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
 }) => {
   const isOnlineDb = Boolean(dbStatus.isNeon || dbStatus.isMongo);
-
-  const handleTabChange = (tab: 'form' | 'records') => {
-    if (tab === 'records' && !isAdmin) {
-      onOpenAdminModal();
-      return;
-    }
-    setCurrentTab(tab);
-  };
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs" id="app-header">
@@ -69,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="inline sm:hidden">Student Outcome Portal</span>
                 </h1>
                 <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight truncate hidden xs:block">
-                  Academic Participation &amp; Progression Portal
+                  {isAdmin ? 'Administrator Submissions Portal' : 'Academic Participation & Progression Portal'}
                 </p>
               </div>
             </div>
@@ -125,6 +112,15 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Admin Badge or Sign-In Button */}
             {isAdmin ? (
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
+                {/* Submissions count badge */}
+                <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 px-2.5 py-1 sm:py-1.5 rounded-full whitespace-nowrap text-xs font-semibold text-indigo-900">
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span className="hidden sm:inline">Submissions:</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-indigo-200 text-indigo-800 font-bold text-[10px]">
+                    {submissionsCount}
+                  </span>
+                </div>
+
                 {/* Admin name badge */}
                 <div className="flex items-center gap-1 bg-purple-50 border border-purple-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full whitespace-nowrap">
                   <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600 shrink-0" />
@@ -164,46 +160,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span>Admin Login</span>
               </button>
-            )}
-
-            {/* Navigation Tabs (Admin Only) */}
-            {isAdmin && (
-              <>
-                {/* Divider */}
-                <div className="hidden md:block w-px h-5 bg-slate-200 shrink-0" />
-
-                <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0 ml-auto md:ml-0">
-                  <button
-                    type="button"
-                    id="nav-tab-form"
-                    onClick={() => handleTabChange('form')}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      currentTab === 'form'
-                        ? 'bg-white text-indigo-700 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <PlusCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span>Form</span>
-                  </button>
-                  <button
-                    type="button"
-                    id="nav-tab-records"
-                    onClick={() => handleTabChange('records')}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      currentTab === 'records'
-                        ? 'bg-white text-indigo-700 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <FileSpreadsheet className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span>Submissions</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
-                      {submissionsCount}
-                    </span>
-                  </button>
-                </div>
-              </>
             )}
           </div>
 

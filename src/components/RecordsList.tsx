@@ -29,7 +29,7 @@ interface RecordsListProps {
   loading: boolean;
   onRefresh: () => void;
   onDelete: (id: string) => void;
-  onEdit: (sub: StudentSubmission) => void;
+  onEdit?: (sub: StudentSubmission) => void;
   dbType: string;
 }
 
@@ -449,17 +449,19 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(item);
-                      }}
-                      className="p-2 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                      title="Edit this record"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(item);
+                        }}
+                        className="p-2 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                        title="Edit this record"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
 
                     <button
                       type="button"

@@ -41,8 +41,6 @@ import { AdminSettingsModal } from './components/AdminSettingsModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<'form' | 'records'>('form');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     return sessionStorage.getItem('portal_admin_auth') === 'true';
   });
@@ -196,7 +194,6 @@ export default function App() {
     sessionStorage.removeItem('portal_admin_auth');
     sessionStorage.removeItem('portal_admin_user');
     setIsAdmin(false);
-    setCurrentTab('form');
   };
 
   const handleToggleCategory = (cat: AchievementCategory) => {
@@ -384,91 +381,6 @@ export default function App() {
     if (clearSuccess) {
       setSubmitSuccess(null);
     }
-    setEditingId(null);
-  };
-
-  const handleEditRecord = (sub: StudentSubmission) => {
-    const id = sub._id || sub.id || null;
-    setEditingId(id);
-    setEnrollmentNumber(sub.enrollmentNumber || '');
-    setFullName(sub.fullName || '');
-    setAcademicYear((sub.academicYear as AcademicYear) || '2024-25');
-    setSemester((sub.semester as any) || 'IV');
-    setHigherStudiesPlan((sub.higherStudiesPlan as any) || '');
-    setHigherStudiesUniversityName(sub.higherStudiesUniversityName || '');
-    setHigherStudiesProof(sub.higherStudiesProof);
-    setSelectedAchievementCategories(sub.selectedAchievementCategories || []);
-
-    // Normalize competitionAchievements
-    const rawComp = sub.competitionAchievements || {};
-    const normComp: Record<string, CompetitionAchievement[]> = {};
-    for (const [k, v] of Object.entries(rawComp)) {
-      if (Array.isArray(v)) {
-        normComp[k] = v;
-      } else if (v && typeof v === 'object') {
-        normComp[k] = [v as CompetitionAchievement];
-      }
-    }
-    setCompetitionAchievements(normComp);
-
-    // Normalize patents
-    if (sub.patentDetails && sub.patentDetails.length > 0) {
-      setPatentDetails(sub.patentDetails);
-    } else if (sub.patentDetail) {
-      setPatentDetails([sub.patentDetail]);
-    } else {
-      setPatentDetails([{ patentTitle: '', patentAppNumber: '', patentStatus: 'Filed', filingDate: '' }]);
-    }
-
-    // Normalize startups
-    if (sub.startupDetails && sub.startupDetails.length > 0) {
-      setStartupDetails(sub.startupDetails);
-    } else if (sub.startupDetail) {
-      setStartupDetails([sub.startupDetail]);
-    } else {
-      setStartupDetails([{ startupName: '', studentRole: '', startupStatus: 'Idea Stage', registrationDetails: '' }]);
-    }
-
-    // Normalize funded projects
-    if (sub.fundedProjectDetails && sub.fundedProjectDetails.length > 0) {
-      setFundedProjectDetails(sub.fundedProjectDetails);
-    } else if (sub.fundedProjectDetail) {
-      setFundedProjectDetails([sub.fundedProjectDetail]);
-    } else {
-      setFundedProjectDetails([{ projectTitle: '', fundingAgency: '', fundingAmount: '', projectStatus: 'Approved' }]);
-    }
-
-    // Normalize SSIP projects
-    if (sub.ssipProjectDetails && sub.ssipProjectDetails.length > 0) {
-      setSSIPProjectDetails(sub.ssipProjectDetails);
-    } else if (sub.ssipProjectDetail) {
-      setSSIPProjectDetails([sub.ssipProjectDetail]);
-    } else {
-      setSSIPProjectDetails([{ projectTitle: '', ssipStatus: 'Approved', fundingAmount: '' }]);
-    }
-
-    // Normalize research publications
-    if (sub.researchPublicationDetails && sub.researchPublicationDetails.length > 0) {
-      setResearchPublicationDetails(sub.researchPublicationDetails);
-    } else if (sub.researchPublicationDetail) {
-      setResearchPublicationDetails([sub.researchPublicationDetail]);
-    } else {
-      setResearchPublicationDetails([{
-        paperTitle: '',
-        journalConferenceName: '',
-        publicationType: 'Journal',
-        publicationStatus: 'Published',
-        doiOrLink: '',
-      }]);
-    }
-
-    setExitProgression(sub.exitProgression || { isExiting: false, exitYear: 'Year 3', pathway: 'Higher Education' });
-    setSubmitError(null);
-    setFieldErrors({});
-    setActiveErrorFieldId(null);
-    setSubmitSuccess(null);
-    setCurrentTab('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const scrollToElement = (elementId: string) => {
@@ -668,22 +580,11 @@ export default function App() {
 
     setSubmitting(true);
     try {
-      let res: Response;
-      if (editingId) {
-        // UPDATE existing record
-        res = await fetch(`/api/submissions/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        // CREATE new record
-        res = await fetch('/api/submissions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       const resData = await res.json();
       if (!res.ok) {
@@ -692,7 +593,6 @@ export default function App() {
 
       resetForm(false);
       setSubmitSuccess('Form successfully uploaded.');
-      setEditingId(null);
       fetchDbHealth();
       fetchSubmissions();
 
@@ -788,8 +688,6 @@ export default function App() {
 
       {/* Top Navigation & Brand Header */}
       <Header
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
         submissionsCount={submissions.length}
         dbStatus={dbStatus}
         isAdmin={isAdmin}
@@ -801,230 +699,13 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12">
-        {/* Minimal Clean Success Notification */}
-        {submitSuccess && (
-          <div
-            id="submission-success-banner"
-            className="p-3 sm:p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-emerald-900 shadow-xs animate-in fade-in"
-          >
-            <div className="flex items-center space-x-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <p className="text-xs sm:text-sm font-semibold text-emerald-900">{submitSuccess}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSubmitSuccess(null)}
-              className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/60 rounded transition-colors cursor-pointer"
-              title="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Form Error Banner */}
-        {submitError && (
-          <div
-            id="submission-error-banner"
-            className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-3 shadow-xs animate-in fade-in"
-          >
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="font-medium">{submitError}</span>
-          </div>
-        )}
-
-        {currentTab === 'form' ? (
-          /* Tab 1: Data Collection Form */
-          <>
-          {editingId && (
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-700 font-bold text-xs">✏️ Editing Record</span>
-                <span className="text-xs text-amber-600">You are editing an existing submission. Submit to save changes.</span>
-              </div>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-3 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg cursor-pointer"
-              >
-                Cancel Edit
-              </button>
-            </div>
-          )}
-          <form noValidate onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
-            {/* Section 1: Basic Student Profile */}
-            <BasicInfoSection
-              enrollmentNumber={enrollmentNumber}
-              setEnrollmentNumber={(val) => {
-                setEnrollmentNumber(val);
-                if (fieldErrors['enrollment-number-input']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['enrollment-number-input'];
-                    return next;
-                  });
-                }
-              }}
-              fullName={fullName}
-              setFullName={(val) => {
-                setFullName(val);
-                if (fieldErrors['fullname-input']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['fullname-input'];
-                    return next;
-                  });
-                }
-              }}
-              academicYear={academicYear}
-              setAcademicYear={(val) => {
-                setAcademicYear(val);
-                if (fieldErrors['academic-year-container']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['academic-year-container'];
-                    return next;
-                  });
-                }
-              }}
-              semester={semester}
-              setSemester={(val) => {
-                setSemester(val);
-                if (fieldErrors['semester-container']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['semester-container'];
-                    return next;
-                  });
-                }
-              }}
-              errors={fieldErrors}
-            />
-
-            {/* Section 2: Higher Studies Verification */}
-            <HigherStudiesSection
-              higherStudiesPlan={higherStudiesPlan}
-              setHigherStudiesPlan={(val) => {
-                setHigherStudiesPlan(val);
-                if (fieldErrors['higher-studies-section']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['higher-studies-section'];
-                    return next;
-                  });
-                }
-              }}
-              higherStudiesUniversityName={higherStudiesUniversityName}
-              setHigherStudiesUniversityName={(val) => {
-                setHigherStudiesUniversityName(val);
-                if (fieldErrors['higher-studies-university-name-input']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['higher-studies-university-name-input'];
-                    return next;
-                  });
-                }
-              }}
-              higherStudiesProof={higherStudiesProof}
-              setHigherStudiesProof={(val) => {
-                setHigherStudiesProof(val);
-                if (fieldErrors['higher-studies-proof-container']) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next['higher-studies-proof-container'];
-                    return next;
-                  });
-                }
-              }}
-              errors={fieldErrors}
-            />
-
-            {/* Section 3: Achievements & Progression */}
-            <AchievementTypesSection
-              selectedCategories={selectedAchievementCategories}
-              onToggleCategory={handleToggleCategory}
-              toggleCategory={handleToggleCategory}
-              competitionAchievements={competitionAchievements}
-              addCompetitionEntry={addCompetitionEntry}
-              updateCompetitionEntry={updateCompetitionEntry}
-              removeCompetitionEntry={removeCompetitionEntry}
-              patentDetails={patentDetails}
-              addPatent={addPatent}
-              updatePatent={updatePatent}
-              removePatent={removePatent}
-              startupDetails={startupDetails}
-              addStartup={addStartup}
-              updateStartup={updateStartup}
-              removeStartup={removeStartup}
-              fundedProjectDetails={fundedProjectDetails}
-              addFundedProject={addFundedProject}
-              updateFundedProject={updateFundedProject}
-              removeFundedProject={removeFundedProject}
-              ssipProjectDetails={ssipProjectDetails}
-              addSSIPProject={addSSIPProject}
-              updateSSIPProject={updateSSIPProject}
-              removeSSIPProject={removeSSIPProject}
-              researchPublicationDetails={researchPublicationDetails}
-              addResearchPublication={addResearchPublication}
-              updateResearchPublication={updateResearchPublication}
-              removeResearchPublication={removeResearchPublication}
-            />
-
-            {/* Section 4: Exit / Progression After Year 2 / 3 / 4 */}
-            <ExitProgressionSection
-              exitProgression={exitProgression}
-              setExitProgression={setExitProgression}
-            />
-
-            {/* Main Form Action Bar */}
-            <div
-              id="form-action-bar"
-              className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col gap-3"
-            >
-              {submitError && (
-                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2.5 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span className="font-semibold">{submitError}</span>
-                </div>
-              )}
-
-              <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Reset Form</span>
-                </button>
-
-                <button
-                  type="submit"
-                  id="main-submit-button"
-                  disabled={submitting}
-                  className={`w-full sm:w-auto px-6 sm:px-8 py-3 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
-                    editingId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
-                  }`}
-                >
-                  {submitting ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Saving Record...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      <span>{editingId ? 'Update Record' : 'Submit Student Outcome Record'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-          </>
-        ) : isAdmin ? (
-          /* Tab 2: Records List View (Admin Only) */
+      <main
+        className={`${
+          isAdmin ? 'max-w-7xl px-3 sm:px-6 lg:px-8' : 'max-w-4xl px-3 sm:px-6'
+        } mx-auto pt-4 sm:pt-8 space-y-4 sm:space-y-6 flex-1 w-full pb-12`}
+      >
+        {isAdmin ? (
+          /* Admin View: Records Management Dashboard (Form completely removed) */
           <RecordsList
             submissions={submissions}
             loading={loadingSubmissions}
@@ -1033,39 +714,212 @@ export default function App() {
               fetchSubmissions();
             }}
             onDelete={handleDeleteRecord}
-            onEdit={handleEditRecord}
             dbType={dbStatus.database}
           />
         ) : (
-          /* Admin Access Locked Screen */
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
-              <Lock className="w-8 h-8" />
-            </div>
-            <div className="space-y-1">
-              <h2 className="text-xl font-bold text-slate-900">Admin Access Required</h2>
-              <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Viewing student submissions, uploaded documents, and exporting reports is restricted to administrators and authorized faculty members.
-              </p>
-            </div>
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setCurrentTab('form')}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+          /* Student / Public View: Data Collection Form */
+          <>
+            {/* Minimal Clean Success Notification */}
+            {submitSuccess && (
+              <div
+                id="submission-success-banner"
+                className="p-3 sm:p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-emerald-900 shadow-xs animate-in fade-in"
               >
-                Back to Student Form
-              </button>
-              <button
-                type="button"
-                onClick={() => setAdminModalOpen(true)}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer flex items-center gap-1.5"
+                <div className="flex items-center space-x-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <p className="text-xs sm:text-sm font-semibold text-emerald-900">{submitSuccess}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSubmitSuccess(null)}
+                  className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/60 rounded transition-colors cursor-pointer"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Form Error Banner */}
+            {submitError && (
+              <div
+                id="submission-error-banner"
+                className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-3 shadow-xs animate-in fade-in"
               >
-                <ShieldCheck className="w-4 h-4" />
-                Sign In as Admin
-              </button>
-            </div>
-          </div>
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                <span className="font-medium">{submitError}</span>
+              </div>
+            )}
+
+            <form noValidate onSubmit={handleSubmit} className="space-y-6" id="student-outcome-form">
+              {/* Section 1: Basic Student Profile */}
+              <BasicInfoSection
+                enrollmentNumber={enrollmentNumber}
+                setEnrollmentNumber={(val) => {
+                  setEnrollmentNumber(val);
+                  if (fieldErrors['enrollment-number-input']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['enrollment-number-input'];
+                      return next;
+                    });
+                  }
+                }}
+                fullName={fullName}
+                setFullName={(val) => {
+                  setFullName(val);
+                  if (fieldErrors['fullname-input']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['fullname-input'];
+                      return next;
+                    });
+                  }
+                }}
+                academicYear={academicYear}
+                setAcademicYear={(val) => {
+                  setAcademicYear(val);
+                  if (fieldErrors['academic-year-container']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['academic-year-container'];
+                      return next;
+                    });
+                  }
+                }}
+                semester={semester}
+                setSemester={(val) => {
+                  setSemester(val);
+                  if (fieldErrors['semester-container']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['semester-container'];
+                      return next;
+                    });
+                  }
+                }}
+                errors={fieldErrors}
+              />
+
+              {/* Section 2: Higher Studies Verification */}
+              <HigherStudiesSection
+                higherStudiesPlan={higherStudiesPlan}
+                setHigherStudiesPlan={(val) => {
+                  setHigherStudiesPlan(val);
+                  if (fieldErrors['higher-studies-section']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['higher-studies-section'];
+                      return next;
+                    });
+                  }
+                }}
+                higherStudiesUniversityName={higherStudiesUniversityName}
+                setHigherStudiesUniversityName={(val) => {
+                  setHigherStudiesUniversityName(val);
+                  if (fieldErrors['higher-studies-university-name-input']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['higher-studies-university-name-input'];
+                      return next;
+                    });
+                  }
+                }}
+                higherStudiesProof={higherStudiesProof}
+                setHigherStudiesProof={(val) => {
+                  setHigherStudiesProof(val);
+                  if (fieldErrors['higher-studies-proof-container']) {
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next['higher-studies-proof-container'];
+                      return next;
+                    });
+                  }
+                }}
+                errors={fieldErrors}
+              />
+
+              {/* Section 3: Achievements & Progression */}
+              <AchievementTypesSection
+                selectedCategories={selectedAchievementCategories}
+                onToggleCategory={handleToggleCategory}
+                toggleCategory={handleToggleCategory}
+                competitionAchievements={competitionAchievements}
+                addCompetitionEntry={addCompetitionEntry}
+                updateCompetitionEntry={updateCompetitionEntry}
+                removeCompetitionEntry={removeCompetitionEntry}
+                patentDetails={patentDetails}
+                addPatent={addPatent}
+                updatePatent={updatePatent}
+                removePatent={removePatent}
+                startupDetails={startupDetails}
+                addStartup={addStartup}
+                updateStartup={updateStartup}
+                removeStartup={removeStartup}
+                fundedProjectDetails={fundedProjectDetails}
+                addFundedProject={addFundedProject}
+                updateFundedProject={updateFundedProject}
+                removeFundedProject={removeFundedProject}
+                ssipProjectDetails={ssipProjectDetails}
+                addSSIPProject={addSSIPProject}
+                updateSSIPProject={updateSSIPProject}
+                removeSSIPProject={removeSSIPProject}
+                researchPublicationDetails={researchPublicationDetails}
+                addResearchPublication={addResearchPublication}
+                updateResearchPublication={updateResearchPublication}
+                removeResearchPublication={removeResearchPublication}
+              />
+
+              {/* Section 4: Exit / Progression After Year 2 / 3 / 4 */}
+              <ExitProgressionSection
+                exitProgression={exitProgression}
+                setExitProgression={setExitProgression}
+              />
+
+              {/* Main Form Action Bar */}
+              <div
+                id="form-action-bar"
+                className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col gap-3"
+              >
+                {submitError && (
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2.5 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-semibold">{submitError}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Reset Form</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    id="main-submit-button"
+                    disabled={submitting}
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Saving Record...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Submit Student Outcome Record</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </>
         )}
       </main>
 
@@ -1079,7 +933,6 @@ export default function App() {
         onLoginSuccess={() => {
           setIsAdmin(true);
           setAdminUsername(sessionStorage.getItem('portal_admin_user') || 'admin');
-          setCurrentTab('records');
           fetchSubmissions();
         }}
       />
