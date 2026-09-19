@@ -551,6 +551,17 @@ export default function App() {
       }
     }
 
+    // Filter competition achievements strictly to currently selected categories
+    const activeCompetitionAchievements: Record<string, CompetitionAchievement[]> = {};
+    if (selectedAchievementCategories && selectedAchievementCategories.length > 0) {
+      for (const cat of selectedAchievementCategories) {
+        if (competitionAchievements[cat]) {
+          const raw = competitionAchievements[cat];
+          activeCompetitionAchievements[cat] = Array.isArray(raw) ? raw : [raw];
+        }
+      }
+    }
+
     const payload: StudentSubmission = {
       enrollmentNumber: enrollmentNumber.trim(),
       fullName: fullName.trim(),
@@ -560,7 +571,7 @@ export default function App() {
       higherStudiesUniversityName: isOtherOrForeign ? higherStudiesUniversityName.trim() : undefined,
       higherStudiesProof,
       selectedAchievementCategories,
-      competitionAchievements,
+      competitionAchievements: activeCompetitionAchievements,
       patentDetails: selectedAchievementCategories.includes('Patent') ? patentDetails : undefined,
       patentDetail: selectedAchievementCategories.includes('Patent') ? patentDetails[0] : undefined,
       startupDetails: selectedAchievementCategories.includes('Startup') ? startupDetails : undefined,

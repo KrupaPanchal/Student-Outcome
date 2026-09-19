@@ -21,6 +21,7 @@ import {
   ResearchPublicationDetail,
 } from '../types';
 import { FileUploadField } from './FileUploadField';
+import { cleanDocumentIdentifier } from '../utils/documentUtils';
 
 interface AchievementTypesSectionProps {
   selectedCategories?: AchievementCategory[];
@@ -394,9 +395,9 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                         {/* Upload Certificate */}
                         <div className="sm:col-span-2">
                           <FileUploadField
-                            id={`certificate-${cat}-${index}`}
-                            label="Upload Certificate"
-                            documentName={`${cat.replace(/[^a-zA-Z0-9]+/g, '_')}_Certificate${entries.length > 1 ? `_${index + 1}` : ''}`}
+                            id={`certificate-${cleanDocumentIdentifier(cat).toLowerCase()}-${index}`}
+                            label={`Upload ${cat} Certificate`}
+                            documentName={`${cleanDocumentIdentifier(cat)}_Certificate${entries.length > 1 ? `_${index + 1}` : ''}`}
                             enrollmentNumber={enrollmentNumber}
                             description="Upload 1 supported file. Max 2 MB (PDF only)."
                             value={data.certificateFile}
