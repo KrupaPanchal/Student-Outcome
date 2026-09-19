@@ -19,10 +19,13 @@ import {
   Pencil,
   Clock,
   FileSpreadsheet,
+  FolderDown,
+  Archive,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { StudentSubmission, AcademicYear, Semester, UploadedFile, CompetitionAchievement } from '../types';
 import { PdfPreviewModal } from './PdfPreviewModal';
+import { downloadStudentDocumentsZip, extractSubmissionDocuments } from '../utils/documentUtils';
 
 interface RecordsListProps {
   submissions: StudentSubmission[];
@@ -48,6 +51,21 @@ export const RecordsList: React.FC<RecordsListProps> = ({
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [confirmDeleteTarget, setConfirmDeleteTarget] = useState<{ id: string; name: string; enrollment: string } | null>(null);
   const [exportingType, setExportingType] = useState<'csv' | 'excel' | 'json' | null>(null);
+  const [downloadingZipId, setDownloadingZipId] = useState<string | null>(null);
+
+  const handleDownloadZip = async (sub: StudentSubmission, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const subId = sub._id || sub.id || sub.enrollmentNumber;
+    try {
+      setDownloadingZipId(subId);
+      await downloadStudentDocumentsZip(sub);
+    } catch (err: any) {
+      console.error('Failed to download documents ZIP:', err);
+      alert(err.message || 'Failed to download student documents archive.');
+    } finally {
+      setDownloadingZipId(null);
+    }
+  };
 
   const filtered = submissions.filter((item) => {
     const s = searchTerm.toLowerCase();
@@ -405,6 +423,10 @@ export const RecordsList: React.FC<RecordsListProps> = ({
           {filtered.map((item) => {
             const id = item._id || item.id || '';
             const isExpanded = expandedId === id;
+            const studentDocs = extractSubmissionDocuments(item);
+            const docCount = studentDocs.length;
+            const hasDocs = docCount > 0;
+            const isDownloadingThis = downloadingZipId === id || downloadingZipId === item.enrollmentNumber;
 
             return (
               <div
@@ -449,6 +471,32 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                       </p>
                     </div>
 
+                    <button
+                      type="button"
+                      id={`download-zip-btn-${id || item.enrollmentNumber}`}
+                      onClick={(e) => hasDocs && handleDownloadZip(item, e)}
+                      disabled={!hasDocs || isDownloadingThis}
+                      className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold select-none ${
+                        hasDocs
+                          ? 'text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200/80 cursor-pointer shadow-2xs'
+                          : 'text-slate-300 bg-slate-50 border border-slate-200/50 cursor-not-allowed opacity-60'
+                      }`}
+                      title={
+                        hasDocs
+                          ? `Download all ${docCount} document${docCount > 1 ? 's' : ''} as ZIP for ${item.enrollmentNumber}`
+                          : 'No documents uploaded for this student'
+                      }
+                    >
+                      {isDownloadingThis ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                      ) : (
+                        <Archive className="w-3.5 h-3.5" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {hasDocs ? `ZIP (${docCount})` : 'No Docs'}
+                      </span>
+                    </button>
+
                     {onEdit && (
                       <button
                         type="button"
@@ -489,16 +537,34 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                 {isExpanded && (
                   <div className="p-5 border-t border-slate-100 bg-slate-50/50 space-y-5 text-xs">
                       {/* Timestamps */}
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
-                          <Clock className="w-3 h-3" />
-                          Submitted: {new Date(item.submittedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
-                        </span>
-                        {(item as any).updatedAt && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
-                            <Pencil className="w-3 h-3" />
-                            Last Updated: {new Date((item as any).updatedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
+                            <Clock className="w-3 h-3" />
+                            Submitted: {new Date(item.submittedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
                           </span>
+                          {(item as any).updatedAt && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+                              <Pencil className="w-3 h-3" />
+                              Last Updated: {new Date((item as any).updatedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
+                            </span>
+                          )}
+                        </div>
+
+                        {hasDocs && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDownloadZip(item, e)}
+                            disabled={isDownloadingThis}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors shrink-0 text-xs"
+                          >
+                            {isDownloadingThis ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                            ) : (
+                              <Download className="w-3.5 h-3.5" />
+                            )}
+                            <span>Download All {docCount} Document{docCount > 1 ? 's' : ''} (ZIP)</span>
+                          </button>
                         )}
                       </div>
                       {/* Basic Grid */}

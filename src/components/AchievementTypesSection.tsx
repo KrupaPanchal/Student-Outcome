@@ -530,7 +530,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-patent-proof-${index}`}
                         label="Upload Patent Proof"
-                        documentName={`Patent_Proof${patentList.length > 1 ? `_${index + 1}` : ''}`}
+                        documentName={`Patent_Proof${safePatentDetails.length > 1 ? `_${index + 1}` : ''}`}
                         enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Filing receipt, journal, or grant certificate)."
                         value={patent.proofFile}
@@ -652,7 +652,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-startup-proof-${index}`}
                         label="Upload Startup Proof"
-                        documentName={`Startup_Proof${startupList.length > 1 ? `_${index + 1}` : ''}`}
+                        documentName={`Startup_Proof${safeStartupDetails.length > 1 ? `_${index + 1}` : ''}`}
                         enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Incorporation certificate, DPIIT letter, or incubation proof)."
                         value={startup.proofFile}
@@ -774,7 +774,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-funding-proof-${index}`}
                         label="Upload Funding / Approval Proof"
-                        documentName={`Funded_Project_Proof${fundedList.length > 1 ? `_${index + 1}` : ''}`}
+                        documentName={`Funded_Project_Proof${safeFundedProjectDetails.length > 1 ? `_${index + 1}` : ''}`}
                         enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Sanction letter or disbursement proof)."
                         value={project.proofFile}
@@ -883,7 +883,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-ssip-proof-${index}`}
                         label="Upload SSIP Proof (File Upload – Required)"
-                        documentName={`SSIP_Project_Proof${ssipList.length > 1 ? `_${index + 1}` : ''}`}
+                        documentName={`SSIP_Project_Proof${safeSSIPProjectDetails.length > 1 ? `_${index + 1}` : ''}`}
                         enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - SSIP Committee sanction order or grant letter)."
                         required={true}
@@ -1030,7 +1030,7 @@ export const AchievementTypesSection: React.FC<AchievementTypesSectionProps> = (
                       <FileUploadField
                         id={`upload-publication-proof-${index}`}
                         label="Upload Publication Proof"
-                        documentName={`Research_Publication_Proof${pubList.length > 1 ? `_${index + 1}` : ''}`}
+                        documentName={`Research_Publication_Proof${safeResearchPublicationDetails.length > 1 ? `_${index + 1}` : ''}`}
                         enrollmentNumber={enrollmentNumber}
                         description="Upload 1 supported file. Max 2 MB (PDF only - Paper first page, acceptance letter, or proceedings copy)."
                         value={pub.proofFile}

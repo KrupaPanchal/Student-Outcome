@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import zlib from 'zlib';
+import JSZip from 'jszip';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { Pool } from 'pg';
@@ -335,8 +337,19 @@ app.get('/api/submissions/:id/file', async (req, res) => {
         return res.status(400).json({ error: 'Invalid base64 document format' });
       }
 
-      const contentType = match[1] || 'application/pdf';
-      const fileBuffer = Buffer.from(match[2], 'base64');
+      let contentType = match[1] || 'application/pdf';
+      let fileBuffer = Buffer.from(match[2], 'base64');
+      const isDeflated = contentType.includes('+deflate') || (foundFile as any).compressed;
+
+      if (isDeflated) {
+        try {
+          fileBuffer = zlib.inflateSync(fileBuffer);
+          contentType = 'application/pdf';
+        } catch (zlibErr) {
+          console.error('Error decompressing deflated PDF in server:', zlibErr);
+        }
+      }
+
       const fileName = (foundFile as any).name || 'document.pdf';
 
       res.setHeader('Content-Type', contentType);
@@ -355,6 +368,97 @@ app.get('/api/submissions/:id/file', async (req, res) => {
   } catch (err: any) {
     console.error('Error serving submission file:', err);
     res.status(500).json({ error: 'Failed to retrieve file', details: err?.message });
+  }
+});
+
+// Dedicated ZIP Archive Download for all documents of a student
+app.get('/api/submissions/:id/zip', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cache = await loadSubmissionsCache();
+    const record = cache.find(
+      (item) =>
+        String(item.id) === String(id) ||
+        String(item._id) === String(id) ||
+        String(item.enrollmentNumber) === String(id)
+    );
+
+    if (!record) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    const enrollment = (record.enrollmentNumber || 'STUDENT').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const zip = new JSZip();
+
+    // Helper to find all files recursively
+    const files: { name: string; dataUrl: string; compressed?: boolean }[] = [];
+    function collectFiles(obj: any) {
+      if (!obj || typeof obj !== 'object') return;
+      if (typeof obj.dataUrl === 'string' && typeof obj.name === 'string') {
+        files.push(obj);
+        return;
+      }
+      for (const val of Object.values(obj)) {
+        if (typeof val === 'object') collectFiles(val);
+      }
+    }
+
+    collectFiles(record);
+
+    if (files.length === 0) {
+      return res.status(404).json({ error: 'No documents uploaded for this student' });
+    }
+
+    const usedNames = new Set<string>();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const dataUrl = file.dataUrl;
+      if (!dataUrl || !dataUrl.startsWith('data:')) continue;
+
+      const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!match) continue;
+
+      const contentType = match[1] || '';
+      let fileBuffer = Buffer.from(match[2], 'base64');
+      if (contentType.includes('+deflate') || file.compressed) {
+        try {
+          fileBuffer = zlib.inflateSync(fileBuffer);
+        } catch (e) {
+          console.error('Error decompressing deflated PDF for ZIP:', e);
+        }
+      }
+
+      let filename = file.name || `Document_${i + 1}.pdf`;
+      if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+      if (!filename.startsWith(`${enrollment}_`)) {
+        filename = `${enrollment}_${filename}`;
+      }
+
+      let finalName = filename;
+      let counter = 1;
+      while (usedNames.has(finalName)) {
+        const dotIndex = filename.lastIndexOf('.');
+        const base = dotIndex !== -1 ? filename.slice(0, dotIndex) : filename;
+        const ext = dotIndex !== -1 ? filename.slice(dotIndex) : '.pdf';
+        finalName = `${base}_(${counter})${ext}`;
+        counter++;
+      }
+      usedNames.add(finalName);
+
+      zip.file(finalName, fileBuffer);
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+    const zipFilename = `${enrollment}_All_Documents.zip`;
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(zipFilename)}"`);
+    res.setHeader('Content-Length', zipBuffer.length);
+    return res.send(zipBuffer);
+  } catch (err: any) {
+    console.error('Error generating student ZIP:', err);
+    res.status(500).json({ error: 'Failed to generate documents ZIP', details: err?.message });
   }
 });
 

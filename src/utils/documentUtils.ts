@@ -1,4 +1,4 @@
-import pako from 'pako';
+import { deflate, inflate } from 'pako';
 import JSZip from 'jszip';
 import { StudentSubmission, UploadedFile, CompetitionAchievement } from '../types';
 
@@ -54,7 +54,7 @@ export async function compressPdfFile(file: File): Promise<{
 
   try {
     // Apply lossless DEFLATE compression with level 6
-    const compressedBytes = pako.deflate(rawBytes, { level: 6 });
+    const compressedBytes = deflate(rawBytes, { level: 6 });
 
     // Check if compression saved space
     if (compressedBytes.length < rawBytes.length) {
@@ -139,7 +139,7 @@ export function decompressPdfData(dataUrlOrBase64: string): {
 
     if (!isAlreadyPdf || isExplicitlyCompressed) {
       try {
-        const decompressed = pako.inflate(rawBytes);
+        const decompressed = inflate(rawBytes);
         let decompBinaryStr = '';
         const chunkSize = 8192;
         for (let i = 0; i < decompressed.length; i += chunkSize) {

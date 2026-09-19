@@ -35,6 +35,7 @@ import { HigherStudiesSection } from './components/HigherStudiesSection';
 import { AchievementTypesSection } from './components/AchievementTypesSection';
 import { ExitProgressionSection } from './components/ExitProgressionSection';
 import { RecordsList } from './components/RecordsList';
+import { standardizeSubmissionFiles } from './utils/documentUtils';
 
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminSettingsModal } from './components/AdminSettingsModal';
@@ -578,12 +579,14 @@ export default function App() {
       submittedAt: new Date().toISOString(),
     };
 
+    const sanitizedPayload = standardizeSubmissionFiles(payload);
+
     setSubmitting(true);
     try {
       const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(sanitizedPayload),
       });
 
       const resData = await res.json();
@@ -835,6 +838,7 @@ export default function App() {
                     });
                   }
                 }}
+                enrollmentNumber={enrollmentNumber}
                 errors={fieldErrors}
               />
 
@@ -867,12 +871,14 @@ export default function App() {
                 addResearchPublication={addResearchPublication}
                 updateResearchPublication={updateResearchPublication}
                 removeResearchPublication={removeResearchPublication}
+                enrollmentNumber={enrollmentNumber}
               />
 
               {/* Section 4: Exit / Progression After Year 2 / 3 / 4 */}
               <ExitProgressionSection
                 exitProgression={exitProgression}
                 setExitProgression={setExitProgression}
+                enrollmentNumber={enrollmentNumber}
               />
 
               {/* Main Form Action Bar */}
