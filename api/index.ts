@@ -106,22 +106,63 @@ app.get('/api/submissions/:id/file', async (req, res) => {
     }
 
     const record = result.rows[0].raw_data || result.rows[0];
-    let foundFile: { name: string; type?: string; dataUrl: string } | null = null;
+    const allFiles: { name: string; type?: string; dataUrl: string; compressed?: boolean }[] = [];
 
-    function searchFile(obj: any) {
-      if (!obj || typeof obj !== 'object' || foundFile) return;
-      if (typeof obj.name === 'string' && typeof obj.dataUrl === 'string') {
-        if (!name || obj.name.toLowerCase() === name.toLowerCase()) {
-          foundFile = obj;
-          return;
-        }
+    function collectAllFiles(obj: any) {
+      if (!obj || typeof obj !== 'object') return;
+      if (typeof obj.dataUrl === 'string' && (typeof obj.name === 'string' || obj.dataUrl.startsWith('data:'))) {
+        allFiles.push({
+          name: obj.name || 'document.pdf',
+          type: obj.type || 'application/pdf',
+          dataUrl: obj.dataUrl,
+          compressed: obj.compressed,
+        });
+        return;
       }
       for (const val of Object.values(obj)) {
-        if (typeof val === 'object') searchFile(val);
+        if (typeof val === 'object') collectAllFiles(val);
       }
     }
 
-    searchFile(record);
+    collectAllFiles(record);
+
+    if (allFiles.length === 0) {
+      return res.status(404).json({ error: 'No files found in submission' });
+    }
+
+    const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const reqName = (name || '').trim();
+    const reqClean = clean(reqName);
+
+    // 1. Exact match
+    let foundFile = allFiles.find((f) => f.name.toLowerCase() === reqName.toLowerCase());
+
+    // 2. Decoded URL match
+    if (!foundFile && reqName) {
+      try {
+        const decoded = decodeURIComponent(reqName).toLowerCase();
+        foundFile = allFiles.find((f) => f.name.toLowerCase() === decoded);
+      } catch {}
+    }
+
+    // 3. Alphanumeric clean match (ignores spaces, underscores, hashes, parentheses)
+    if (!foundFile && reqClean) {
+      foundFile = allFiles.find((f) => clean(f.name) === reqClean);
+    }
+
+    // 4. Substring containment match
+    if (!foundFile && reqClean) {
+      foundFile = allFiles.find(
+        (f) => clean(f.name).includes(reqClean) || reqClean.includes(clean(f.name))
+      );
+    }
+
+    // 5. Fallback: If no name specified or only 1 file exists
+    if (!foundFile) {
+      if (!reqName || allFiles.length === 1) {
+        foundFile = allFiles[0];
+      }
+    }
 
     if (!foundFile) {
       return res.status(404).json({ error: 'Requested file not found in submission' });

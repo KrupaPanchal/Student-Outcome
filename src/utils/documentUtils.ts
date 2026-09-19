@@ -122,7 +122,11 @@ export function decompressPdfData(dataUrlOrBase64: string): {
   }
 
   try {
-    const binary = atob(base64);
+    let cleanBase64 = base64.trim().replace(/\s+/g, '');
+    try {
+      cleanBase64 = decodeURIComponent(cleanBase64);
+    } catch {}
+    const binary = atob(cleanBase64);
     const len = binary.length;
     const rawBytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {

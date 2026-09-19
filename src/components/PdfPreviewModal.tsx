@@ -31,33 +31,68 @@ import { decompressPdfData } from '../utils/documentUtils';
 
 export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ file, isOpen, onClose }) => {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isMobile = useMemo(() => isMobileDevice(), []);
 
   useEffect(() => {
     if (!file || !isOpen || !file.dataUrl) {
       setBlobUrl(null);
+      setError(null);
+      setLoading(false);
       return;
     }
 
-    let url = '';
-    try {
-      if (file.dataUrl.startsWith('data:')) {
-        // Transparently decompress if compressed with deflate
-        const { buffer } = decompressPdfData(file.dataUrl);
-        const blob = new Blob([buffer], { type: 'application/pdf' });
-        url = URL.createObjectURL(blob);
-      } else {
-        url = file.dataUrl;
+    let createdBlobUrl = '';
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    async function loadPdf() {
+      try {
+        if (file!.dataUrl.startsWith('data:')) {
+          const { buffer, isCompressed } = decompressPdfData(file!.dataUrl);
+          if (!buffer || buffer.length === 0) {
+            throw new Error('Document buffer is empty or corrupted');
+          }
+          const blob = new Blob([buffer], { type: 'application/pdf' });
+          createdBlobUrl = URL.createObjectURL(blob);
+          if (isMounted) {
+            setBlobUrl(createdBlobUrl);
+            setLoading(false);
+          }
+        } else {
+          // Fetch from server endpoint (e.g. /api/submissions/:id/file?name=...)
+          const res = await fetch(file!.dataUrl);
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.error || `Server returned status ${res.status}`);
+          }
+          const blob = await res.blob();
+          if (blob.size === 0) {
+            throw new Error('Received empty file data from server');
+          }
+          createdBlobUrl = URL.createObjectURL(blob);
+          if (isMounted) {
+            setBlobUrl(createdBlobUrl);
+            setLoading(false);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error preparing PDF preview blob:', err);
+        if (isMounted) {
+          setError(err.message || 'Failed to load PDF preview');
+          setLoading(false);
+        }
       }
-      setBlobUrl(url);
-    } catch (e) {
-      console.error('Error creating PDF preview blob:', e);
-      setBlobUrl(file.dataUrl);
     }
 
+    loadPdf();
+
     return () => {
-      if (url && url.startsWith('blob:')) {
-        URL.revokeObjectURL(url);
+      isMounted = false;
+      if (createdBlobUrl && createdBlobUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(createdBlobUrl);
       }
     };
   }, [file, isOpen]);
@@ -201,9 +236,33 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ file, isOpen, 
                 </div>
               </object>
             )
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-white space-y-3">
+              <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Unable to load document preview</p>
+                <p className="text-xs text-slate-500 mt-1">{error}</p>
+              </div>
+              {file?.dataUrl && (
+                <div className="flex items-center gap-2 pt-2">
+                  <a
+                    href={file.dataUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open Direct Link
+                  </a>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-400 text-xs">
-              Loading document preview...
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs space-y-2">
+              <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <span>Loading document preview...</span>
             </div>
           )}
         </div>

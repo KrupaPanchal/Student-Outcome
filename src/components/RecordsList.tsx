@@ -721,11 +721,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                           {/* Patent */}
                           {((item.patentDetails && item.patentDetails.length > 0)
                             ? item.patentDetails
-                            : (item.patentDetail?.patentTitle ? [item.patentDetail] : [])
-                          ).map((pat, idx) => pat.patentTitle && (
+                            : (item.patentDetail ? [item.patentDetail] : [])
+                          ).map((pat, idx) => (pat.patentTitle || pat.proofFile) && (
                             <div key={`pat-${idx}`} className="p-3 bg-white rounded-lg border border-amber-200 space-y-1">
-                              <span className="font-bold text-amber-900">Patent{item.patentDetails && item.patentDetails.length > 1 ? ` #${idx + 1}` : ''}: {pat.patentTitle}</span>
-                              <p className="text-slate-600">App No: {pat.patentAppNumber} • Status: {pat.patentStatus} • Date: {pat.filingDate}</p>
+                              <span className="font-bold text-amber-900">Patent{item.patentDetails && item.patentDetails.length > 1 ? ` #${idx + 1}` : ''}: {pat.patentTitle || 'Untitled Patent'}</span>
+                              <p className="text-slate-600">App No: {pat.patentAppNumber || 'N/A'} • Status: {pat.patentStatus} • Date: {pat.filingDate || 'N/A'}</p>
                               {pat.proofFile && (
                                 <button
                                   type="button"
@@ -742,11 +742,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                           {/* Startup */}
                           {((item.startupDetails && item.startupDetails.length > 0)
                             ? item.startupDetails
-                            : (item.startupDetail?.startupName ? [item.startupDetail] : [])
-                          ).map((startup, idx) => startup.startupName && (
+                            : (item.startupDetail ? [item.startupDetail] : [])
+                          ).map((startup, idx) => (startup.startupName || startup.proofFile) && (
                             <div key={`startup-${idx}`} className="p-3 bg-white rounded-lg border border-emerald-200 space-y-1">
-                              <span className="font-bold text-emerald-900">Startup{item.startupDetails && item.startupDetails.length > 1 ? ` #${idx + 1}` : ''}: {startup.startupName}</span>
-                              <p className="text-slate-600">Role: {startup.studentRole} • Status: {startup.startupStatus}</p>
+                              <span className="font-bold text-emerald-900">Startup{item.startupDetails && item.startupDetails.length > 1 ? ` #${idx + 1}` : ''}: {startup.startupName || 'Untitled Startup'}</span>
+                              <p className="text-slate-600">Role: {startup.studentRole || 'N/A'} • Status: {startup.startupStatus}</p>
                               {startup.registrationDetails && (
                                 <p className="text-slate-500">Reg: {startup.registrationDetails}</p>
                               )}
@@ -766,11 +766,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                           {/* Funded Project */}
                           {((item.fundedProjectDetails && item.fundedProjectDetails.length > 0)
                             ? item.fundedProjectDetails
-                            : (item.fundedProjectDetail?.projectTitle ? [item.fundedProjectDetail] : [])
-                          ).map((proj, idx) => proj.projectTitle && (
+                            : (item.fundedProjectDetail ? [item.fundedProjectDetail] : [])
+                          ).map((proj, idx) => (proj.projectTitle || proj.proofFile) && (
                             <div key={`proj-${idx}`} className="p-3 bg-white rounded-lg border border-blue-200 space-y-1">
-                              <span className="font-bold text-blue-900">Funded Project{item.fundedProjectDetails && item.fundedProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {proj.projectTitle}</span>
-                              <p className="text-slate-600">Agency: {proj.fundingAgency} • Amount: {proj.fundingAmount} • Status: {proj.projectStatus}</p>
+                              <span className="font-bold text-blue-900">Funded Project{item.fundedProjectDetails && item.fundedProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {proj.projectTitle || 'Untitled Project'}</span>
+                              <p className="text-slate-600">Agency: {proj.fundingAgency || 'N/A'} • Amount: {proj.fundingAmount || 'N/A'} • Status: {proj.projectStatus}</p>
                               {proj.proofFile && (
                                 <button
                                   type="button"
@@ -787,11 +787,11 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                           {/* SSIP Project */}
                           {((item.ssipProjectDetails && item.ssipProjectDetails.length > 0)
                             ? item.ssipProjectDetails
-                            : (item.ssipProjectDetail?.projectTitle ? [item.ssipProjectDetail] : [])
-                          ).map((ssip, idx) => ssip.projectTitle && (
+                            : (item.ssipProjectDetail ? [item.ssipProjectDetail] : [])
+                          ).map((ssip, idx) => (ssip.projectTitle || ssip.proofFile) && (
                             <div key={`ssip-${idx}`} className="p-3 bg-white rounded-lg border border-purple-200 space-y-1">
-                              <span className="font-bold text-purple-900">SSIP Project{item.ssipProjectDetails && item.ssipProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {ssip.projectTitle}</span>
-                              <p className="text-slate-600">Status: {ssip.ssipStatus} • Amount: {ssip.fundingAmount}</p>
+                              <span className="font-bold text-purple-900">SSIP Project{item.ssipProjectDetails && item.ssipProjectDetails.length > 1 ? ` #${idx + 1}` : ''}: {ssip.projectTitle || 'Untitled SSIP Project'}</span>
+                              <p className="text-slate-600">Status: {ssip.ssipStatus} • Amount: {ssip.fundingAmount || 'N/A'}</p>
                               {ssip.proofFile && (
                                 <button
                                   type="button"
@@ -808,12 +808,12 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                           {/* Research Publication */}
                           {((item.researchPublicationDetails && item.researchPublicationDetails.length > 0)
                             ? item.researchPublicationDetails
-                            : (item.researchPublicationDetail?.paperTitle ? [item.researchPublicationDetail] : [])
-                          ).map((pub, idx) => pub.paperTitle && (
+                            : (item.researchPublicationDetail ? [item.researchPublicationDetail] : [])
+                          ).map((pub, idx) => (pub.paperTitle || pub.proofFile) && (
                             <div key={`pub-${idx}`} className="p-3 bg-white rounded-lg border border-teal-200 space-y-1">
-                              <span className="font-bold text-teal-900">Research Publication{item.researchPublicationDetails && item.researchPublicationDetails.length > 1 ? ` #${idx + 1}` : ''}: {pub.paperTitle}</span>
+                              <span className="font-bold text-teal-900">Research Publication{item.researchPublicationDetails && item.researchPublicationDetails.length > 1 ? ` #${idx + 1}` : ''}: {pub.paperTitle || 'Untitled Publication'}</span>
                               <p className="text-slate-600">
-                                Venue: {pub.journalConferenceName} • Type: {pub.publicationType} • Status: {pub.publicationStatus}
+                                Venue: {pub.journalConferenceName || 'N/A'} • Type: {pub.publicationType} • Status: {pub.publicationStatus}
                               </p>
                               {pub.doiOrLink && (
                                 <p className="text-slate-500">DOI / Link: {pub.doiOrLink}</p>
